@@ -80,6 +80,13 @@ function cleanMediumHtml(html, slug) {
   return output.trim();
 }
 
+// Map each included slug to its topic label.
+// Update this when adding new posts via INCLUDED_POST_SLUGS.
+const SLUG_TOPICS = {
+  "writing-reliable-tests-in-ios-e87cdbe2a10c": "Testing",
+  "manual-code-signing-59dbdbc0543c": "Tooling"
+};
+
 function parseMediumPosts(feedXml) {
   const itemRegex = /<item>([\s\S]*?)<\/item>/gi;
   const items = [...feedXml.matchAll(itemRegex)];
@@ -118,7 +125,7 @@ function parseMediumPosts(feedXml) {
         slug,
         title,
         excerpt,
-        topic: "iOS",
+        topic: SLUG_TOPICS[slug] ?? "iOS",
         url: `/blog/${slug}`,
         publishedAt: pubDate || null,
         contentType: "html",

@@ -1,6 +1,5 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@source inline("tag-{sage,lilac,rose}");
 
 @layer base {
   :root {
@@ -17,19 +16,21 @@
     --border-strong: rgba(137, 120, 183, 0.28);
     --text-strong: #1f1a1d;
     --text-muted: #5f5559;
-    --text-soft: #7a7074;
-    --accent-rose: #b75d69;
-    --accent-lilac: #8978b7;
-    --accent-sage: #5f8771;
+    --text-soft: #6b6165;
+    --accent-rose: #9a4651;
+    --accent-lilac: #6b5798;
+    --accent-sage: #4b6f59;
     --accent-rose-wash: rgba(183, 93, 105, 0.12);
     --accent-lilac-wash: rgba(137, 120, 183, 0.12);
     --accent-sage-wash: rgba(95, 135, 113, 0.14);
-    --link: #76529d;
+    --link: #624385;
     --link-hover: #b75d69;
     --focus-ring: #8a78c0;
     --selection-bg: rgba(137, 120, 183, 0.24);
     --selection-text: #1f1a1d;
     --card-shadow: 0 18px 40px rgba(84, 64, 71, 0.08);
+    --nav-bg: rgba(246, 241, 236, 0.88);
+    --code-bg: rgba(86, 63, 70, 0.07);
   }
 
   html[data-theme="dark"] {
@@ -59,6 +60,8 @@
     --selection-bg: rgba(242, 162, 179, 0.3);
     --selection-text: #fff7fa;
     --card-shadow: 0 22px 48px rgba(0, 0, 0, 0.26);
+    --nav-bg: rgba(24, 26, 31, 0.88);
+    --code-bg: rgba(255, 255, 255, 0.07);
   }
 
   * {
@@ -73,6 +76,7 @@
   body {
     margin: 0;
     min-width: 320px;
+    font-size: 1.0625rem;
     font-family: "Atkinson Hyperlegible Next", "Segoe UI", sans-serif;
     background:
       radial-gradient(circle at top left, var(--page-accent-rose), transparent 32%),
@@ -170,7 +174,6 @@
     font-size: 0.76rem;
     font-weight: 700;
     letter-spacing: 0.08em;
-    text-transform: uppercase;
   }
 
   .tag-sage {
@@ -275,6 +278,17 @@
   .section-anchor {
     scroll-margin-top: 5rem;
   }
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
 }
 
 .blog-content {
@@ -292,76 +306,102 @@
 .blog-content h4 {
   color: var(--text-strong);
   font-family: "Newsreader", Georgia, serif;
-  line-height: 1.15;
-  margin-top: 1.6rem;
-  margin-bottom: 0.8rem;
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+  margin-top: 3rem;
+  margin-bottom: 1rem;
+  scroll-margin-top: 5rem;
 }
 
 .blog-content h1 {
-  font-size: 2.35rem;
+  font-size: 2.2rem;
 }
 
 .blog-content h2 {
-  font-size: 1.95rem;
+  font-size: 1.7rem;
 }
 
 .blog-content h3 {
-  font-size: 1.6rem;
+  font-size: 1.25rem;
+  margin-top: 2rem;
 }
 
 .blog-content p,
-.blog-content li,
-.blog-content blockquote {
+.blog-content li {
+  font-size: 1.05rem;
   color: var(--text-muted);
-  line-height: 1.9;
-  margin-bottom: 0.95rem;
+  line-height: 1.85;
+  margin-bottom: 1.5rem;
+  text-wrap: pretty;
+}
+
+.blog-content blockquote {
+  margin: 0 0 1.5rem;
+  border-left: 3px solid var(--accent-lilac);
+  padding: 4px 0 4px 1.25rem;
+}
+
+.blog-content blockquote p {
+  color: var(--text-soft);
+  font-style: italic;
+  margin: 0;
 }
 
 .blog-content a {
   color: var(--link);
   font-weight: 600;
+  text-underline-offset: 0.2em;
+  transition: color 150ms;
 }
 
 .blog-content a:hover {
   color: var(--link-hover);
+  text-decoration: underline;
 }
 
 .blog-content ul,
 .blog-content ol {
-  margin-bottom: 1rem;
-  margin-left: 1.35rem;
+  margin-bottom: 1.5rem;
+  padding-left: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .blog-content code {
-  border-radius: 0.45rem;
-  background: var(--surface-alt);
-  color: var(--text-strong);
-  padding: 0.12rem 0.38rem;
+  font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
+  font-size: 0.88em;
+  border-radius: 6px;
+  background: var(--code-bg);
+  color: var(--accent-lilac);
+  padding: 0.15em 0.45em;
 }
 
 .blog-content pre {
-  margin: 1.2rem 0;
+  margin: 1.75rem 0;
   overflow-x: auto;
   border: 1px solid var(--border);
-  border-radius: 1rem;
-  background: var(--surface-alt);
-  padding: 1rem;
+  border-radius: 16px;
+  background: var(--code-bg);
+  padding: 1.5rem;
 }
 
 .blog-content pre code {
   background: transparent;
   padding: 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.7;
 }
 
-.blog-content blockquote {
-  margin-left: 0;
-  border-left: 3px solid var(--accent-lilac);
-  padding-left: 1rem;
-  color: var(--text-soft);
+.blog-content hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 2.5rem 0;
 }
 
 .blog-content img {
-  margin: 1.2rem 0;
+  margin: 1.75rem 0;
   max-width: 100%;
   border-radius: 1rem;
 }

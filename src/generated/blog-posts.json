@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-03-28T16:38:18.789Z",
+  "generatedAt": "2026-04-26T00:14:50.495Z",
   "posts": [
     {
       "id": "post-writing-reliable-tests-in-ios-e87cdbe2a10c",
       "slug": "writing-reliable-tests-in-ios-e87cdbe2a10c",
       "title": "Writing Reliable Tests in iOS",
       "excerpt": "Writing tests to increase code coverage (test coverage) is generally a good practice. But engineers must also maintain a reasonable velocity of shipping new features. There’s no doubt testing increases application qualit",
-      "topic": "iOS",
+      "topic": "Testing",
       "url": "/blog/writing-reliable-tests-in-ios-e87cdbe2a10c",
       "publishedAt": "Sun, 01 Dec 2019 19:55:06 GMT",
       "contentType": "html",
@@ -17,7 +17,7 @@
       "slug": "manual-code-signing-59dbdbc0543c",
       "title": "Fun with Code Signing in Xcode 8",
       "excerpt": "Apple introduced automatic code signing feature in Xcode 8. This was intended to fix many issues that developers had previously on managing certificates and provisioning applications in addition to make it much easier to",
-      "topic": "iOS",
+      "topic": "Tooling",
       "url": "/blog/manual-code-signing-59dbdbc0543c",
       "publishedAt": "Wed, 26 Jul 2017 01:26:43 GMT",
       "contentType": "html",
