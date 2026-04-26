@@ -613,8 +613,6 @@ function ResumePage({ theme, onToggleTheme }) {
             <span>{profile.role}</span>
             <span className="text-[var(--border-strong)]">·</span>
             <span>{profile.location}</span>
-            <span className="text-[var(--border-strong)]">·</span>
-            <a href={`mailto:${profile.email}`} className="inline-link interactive-focus">{profile.email}</a>
           </div>
         </header>
 
