@@ -272,6 +272,7 @@ function SiteHeader({ theme, onToggleTheme }) {
           {/* Right: desktop nav links + theme toggle + mobile hamburger */}
           <div className="flex items-center gap-0.5 shrink-0">
             <nav aria-label="Main" className="hidden sm:flex items-center gap-0.5">
+              <Link to="/" className="nav-link interactive-focus">Home</Link>
               <Link to="/blogs" className="nav-link interactive-focus">Blogs</Link>
               <Link to="/talks" className="nav-link interactive-focus">Talks</Link>
               <Link to="/resume" className="nav-link interactive-focus">Resume</Link>
@@ -310,6 +311,7 @@ function SiteHeader({ theme, onToggleTheme }) {
             style={navBg}
           >
             <nav aria-label="Mobile" className="mx-auto max-w-3xl px-5 py-3 flex flex-col">
+              <Link to="/" className="nav-link interactive-focus text-base py-3" onClick={closeMenu}>Home</Link>
               <Link to="/blogs" className="nav-link interactive-focus text-base py-3" onClick={closeMenu}>Blogs</Link>
               <Link to="/talks" className="nav-link interactive-focus text-base py-3" onClick={closeMenu}>Talks</Link>
               <Link to="/resume" className="nav-link interactive-focus text-base py-3" onClick={closeMenu}>Resume</Link>
@@ -609,11 +611,6 @@ function ResumePage({ theme, onToggleTheme }) {
           >
             <span className="text-[var(--accent-lilac)]">Mani</span> Ramezan
           </h1>
-          <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-[var(--text-muted)]">
-            <span>{profile.role}</span>
-            <span className="text-[var(--border-strong)]">·</span>
-            <span>{profile.location}</span>
-          </div>
         </header>
 
         {/* Experience */}
@@ -665,26 +662,6 @@ function ResumePage({ theme, onToggleTheme }) {
               </div>
             ))}
           </div>
-        </section>
-
-        {/* Education */}
-        <section className="py-10 border-b border-[var(--border)]">
-          <h2 className="section-kicker mb-6" style={{ color: "var(--accent-rose)" }}>Education</h2>
-          {resumeEducation.map((edu, i) => (
-            <div
-              key={i}
-              className={`flex items-start justify-between gap-4 py-4 ${i < resumeEducation.length - 1 ? "border-b border-[var(--border)]" : ""}`}
-            >
-              <div>
-                <p className="font-display text-lg leading-tight text-[var(--text-strong)]">{edu.degree}</p>
-                {edu.concentration && (
-                  <p className="text-sm text-[var(--text-muted)] mt-0.5">{edu.concentration}</p>
-                )}
-                <p className="text-sm text-[var(--text-muted)] mt-0.5">{edu.school}</p>
-              </div>
-              <p className="text-xs text-[var(--text-soft)] whitespace-nowrap text-right shrink-0 pt-1">{edu.period}</p>
-            </div>
-          ))}
         </section>
 
         {/* Community */}
