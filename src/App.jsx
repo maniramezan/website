@@ -227,7 +227,7 @@ function SocialIconLink({ id, label, url, small = false, tiny = false }) {
 }
 
 // Social icons shown in the nav (main platforms only to avoid crowding)
-const navSocialIds = ["linkedin", "speakerDeck", "twitter", "bluesky", "mastodon"];
+const navSocialIds = ["linkedin", "github", "speakerDeck", "twitter", "bluesky", "mastodon"];
 
 /* ── Shared nav ─────────────────────────────────────────────────── */
 
