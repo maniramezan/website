@@ -113,6 +113,30 @@ export const talks = [
 
 export const openSourceProjects = [
   {
+    name: "ShipItSwifty",
+    description:
+      "Swift-native CLI and library for iOS and Android app release automation. Automates the build → archive → distribute pipeline from a single declarative Shipfile.yml, with first-class support for App Store Connect, Google Play, code signing, metadata, and AI-assisted setup.",
+    language: "Swift",
+    stars: null,
+    url: "https://github.com/ShipItSwifty/shipitswifty"
+  },
+  {
+    name: "SwiftyShell",
+    description:
+      "Type-safe shell support for Swift. Models shell tools, subcommands, flags, pipelines, and workflows as Swift values — compiler-enforced, testable via MockExecutor, with typed wrappers for Git, Grep, Brew, and more.",
+    language: "Swift",
+    stars: null,
+    url: "https://github.com/maniramezan/SwiftyShell"
+  },
+  {
+    name: "SwiftyChain",
+    description:
+      "Swift 6 keychain wrapper for Apple platforms. Provides a typed Keychain actor for async-safe access and an @KeychainStorage property wrapper for simple optional values.",
+    language: "Swift",
+    stars: null,
+    url: "https://github.com/maniramezan/SwiftyChain"
+  },
+  {
     name: "UserDefaultMacro",
     description:
       "Swift macros that reduce boilerplate when working with UserDefaults-backed storage.",
@@ -172,6 +196,15 @@ export const resumeExperience = [
     notes: [
       "Collaborated with 35+ engineers across multiple teams to build cross-platform apps with Xamarin SDK.",
       "Implemented a conflict resolution screen to support user content syncing on both iOS native and Xamarin."
+    ]
+  },
+  {
+    title: "Senior Expert of Architecture and Infrastructures",
+    company: "Chargoon",
+    location: "Tehran, Iran",
+    period: "Feb 2008 – Jun 2011",
+    notes: [
+      "Designed and delivered enterprise software architecture and infrastructure solutions for large-scale business applications."
     ]
   }
 ];

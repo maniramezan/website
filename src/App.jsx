@@ -36,6 +36,7 @@ posthog.init(import.meta.env.VITE_POSTHOG_KEY, {
 });
 import {
   profile,
+  openSourceProjects,
   resumeEducation,
   resumeExperience,
   resumeSkillGroups,
@@ -629,7 +630,7 @@ function ResumePage({ theme, onToggleTheme }) {
                   </div>
                   <ul className="mt-2 space-y-1.5">
                     {job.notes.map((note, ni) => (
-                      <li key={ni} className="flex gap-2 text-sm leading-7 text-[var(--text-muted)]">
+                      <li key={ni} className="flex gap-2 text-base leading-7 text-[var(--text-muted)]">
                         <span className="shrink-0 text-[var(--text-soft)] select-none">–</span>
                         <span>{note}</span>
                       </li>
@@ -642,8 +643,60 @@ function ResumePage({ theme, onToggleTheme }) {
           ))}
         </section>
 
-        {/* Skills */}
+        {/* Community */}
         <section className="py-10 border-b border-[var(--border)]">
+          <h2 className="section-kicker mb-6" style={{ color: "var(--accent-rose)" }}>Community</h2>
+          <div className="space-y-6">
+            <div>
+              <div className="flex flex-wrap items-baseline gap-x-2">
+                <p className="font-display text-lg text-[var(--text-strong)]">Kodeco</p>
+                <span className="text-sm text-[var(--text-soft)]">Feb 2020 – Present</span>
+              </div>
+              <ul className="mt-2 space-y-1">
+                {[
+                  "Tech editor on multiple published tutorials.",
+                  "Discord moderator helping with overall questions and Apple-specific topics.",
+                  "Mentoring and running bootcamps on Becoming iOS Developer and Introduction to Apple Intelligence."
+                ].map((note, i) => (
+                  <li key={i} className="flex gap-2 text-base leading-7 text-[var(--text-muted)]">
+                    <span className="shrink-0 text-[var(--text-soft)] select-none">–</span>
+                    <span>{note}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <p className="font-display text-lg text-[var(--text-strong)]">Open Source</p>
+              <ul className="mt-2 space-y-1.5">
+                {openSourceProjects.map(project => (
+                  <li key={project.name} className="flex gap-2 text-base leading-7 text-[var(--text-muted)]">
+                    <span className="shrink-0 text-[var(--text-soft)] select-none">–</span>
+                    <span>
+                      <a
+                        href={project.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-link interactive-focus"
+                      >
+                        {project.name}
+                      </a>
+                      {" "}— {project.description}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <p className="font-display text-lg text-[var(--text-strong)]">Conference Speaking</p>
+              <p className="mt-1 text-base leading-7 text-[var(--text-muted)]">
+                Speaker at iOSoho and Kodeco on modularization, testing, release management, and Apple Intelligence.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* Skills */}
+        <section className="py-10">
           <h2 className="section-kicker mb-6" style={{ color: "var(--accent-lilac)" }}>Skills</h2>
           <div className="space-y-5">
             {resumeSkillGroups.map(group => (
@@ -661,51 +714,6 @@ function ResumePage({ theme, onToggleTheme }) {
                 </div>
               </div>
             ))}
-          </div>
-        </section>
-
-        {/* Community */}
-        <section className="py-10">
-          <h2 className="section-kicker mb-6" style={{ color: "var(--accent-rose)" }}>Community</h2>
-          <div className="space-y-6">
-            <div>
-              <div className="flex flex-wrap items-baseline gap-x-2">
-                <p className="font-display text-lg text-[var(--text-strong)]">Kodeco</p>
-                <span className="text-sm text-[var(--text-soft)]">Feb 2020 – Present</span>
-              </div>
-              <ul className="mt-2 space-y-1">
-                {[
-                  "Tech editor on multiple published tutorials.",
-                  "Discord moderator helping with overall questions and Apple-specific topics.",
-                  "Mentoring and running bootcamps on Becoming iOS Developer and Introduction to Apple Intelligence."
-                ].map((note, i) => (
-                  <li key={i} className="flex gap-2 text-sm leading-7 text-[var(--text-muted)]">
-                    <span className="shrink-0 text-[var(--text-soft)] select-none">–</span>
-                    <span>{note}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <p className="font-display text-lg text-[var(--text-strong)]">Open Source</p>
-              <p className="mt-1 text-sm leading-7 text-[var(--text-muted)]">
-                <a
-                  href="https://github.com/maniramezan/UserDefaultMacro"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-link interactive-focus"
-                >
-                  UserDefaultMacro
-                </a>
-                {" "}— Swift macros that reduce boilerplate when working with UserDefaults-backed storage on Apple platforms.
-              </p>
-            </div>
-            <div>
-              <p className="font-display text-lg text-[var(--text-strong)]">Conference Speaking</p>
-              <p className="mt-1 text-sm leading-7 text-[var(--text-muted)]">
-                Speaker at iOSoho and Kodeco on modularization, testing, release management, and Apple Intelligence.
-              </p>
-            </div>
           </div>
         </section>
 
