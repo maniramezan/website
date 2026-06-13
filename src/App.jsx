@@ -35,6 +35,7 @@ posthog.init(import.meta.env.VITE_POSTHOG_KEY, {
   respect_dnt: true,
 });
 import {
+  podcasts,
   profile,
   openSourceProjects,
   resumeEducation,
@@ -661,6 +662,28 @@ function ResumePage({ theme, onToggleTheme }) {
                   <li key={i} className="flex gap-2 text-base leading-7 text-[var(--text-muted)]">
                     <span className="shrink-0 text-[var(--text-soft)] select-none">–</span>
                     <span>{note}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <p className="font-display text-lg text-[var(--text-strong)]">Podcasts</p>
+              <ul className="mt-2 space-y-1.5">
+                {podcasts.map(podcast => (
+                  <li key={podcast.url} className="flex gap-2 text-base leading-7 text-[var(--text-muted)]">
+                    <span className="shrink-0 text-[var(--text-soft)] select-none">–</span>
+                    <span>
+                      <a
+                        href={podcast.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-link interactive-focus"
+                      >
+                        {podcast.title}
+                      </a>
+                      {podcast.publisher ? ` · ${podcast.publisher}` : ""}
+                      {podcast.year ? ` · ${podcast.year}` : ""}
+                    </span>
                   </li>
                 ))}
               </ul>

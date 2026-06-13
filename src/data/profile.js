@@ -146,6 +146,15 @@ export const openSourceProjects = [
   }
 ];
 
+export const podcasts = [
+  {
+    title: "How to Read Code",
+    publisher: "Kodeco",
+    year: 2025,
+    url: "https://www.kodeco.com/46567685-kodeco-podcast-how-to-read-code-podcast-v2-s3-e1"
+  }
+];
+
 export const resumeExperience = [
   {
     title: "Staff Software Engineer",
