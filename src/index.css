@@ -384,6 +384,7 @@
   border-radius: 16px;
   background: var(--code-bg);
   padding: 1.5rem;
+  position: relative;
 }
 
 .blog-content pre code {
@@ -404,6 +405,26 @@
   margin: 1.75rem 0;
   max-width: 100%;
   border-radius: 1rem;
+}
+
+.code-copy-button {
+  position: absolute;
+  top: 0.85rem;
+  right: 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  color: var(--text-soft);
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0.45rem 0.7rem;
+  transition: color 150ms ease, border-color 150ms ease, background 150ms ease;
+}
+
+.code-copy-button:hover {
+  color: var(--text-strong);
+  border-color: var(--text-soft);
 }
 
 @media (max-width: 640px) {

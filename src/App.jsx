@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { marked } from "marked";
 import { markedHighlight } from "marked-highlight";
 import hljs from "highlight.js";
@@ -53,7 +53,10 @@ marked.use(markedHighlight({
   }
 }));
 
-const markdownModules = import.meta.glob("./content/blogs/*.md", {
+const markdownModules = import.meta.glob([
+  "./content/blogs/**/*.md",
+  "!./content/blogs/**/_*.md"
+], {
   query: "?raw",
   import: "default",
   eager: false
@@ -65,13 +68,13 @@ const htmlModules = import.meta.glob("./content/blogs/*.html", {
   eager: false
 });
 
-const getMarkdownModule = (slug) => {
-  const path = Object.keys(markdownModules).find(p => p.endsWith(`${slug}.md`));
+const getMarkdownModule = (contentFile) => {
+  const path = Object.keys(markdownModules).find((p) => p.endsWith(contentFile));
   return path ? markdownModules[path] : null;
 };
 
-const getHtmlModule = (slug) => {
-  const path = Object.keys(htmlModules).find(p => p.endsWith(`${slug}.html`));
+const getHtmlModule = (contentFile) => {
+  const path = Object.keys(htmlModules).find(p => p.endsWith(contentFile));
   return path ? htmlModules[path] : null;
 };
 
@@ -749,6 +752,7 @@ function BlogPostPage({ theme, onToggleTheme }) {
   const { slug } = useParams();
   const post = blogData.posts.find(entry => entry.slug === slug);
   const [contentHtml, setContentHtml] = useState(null);
+  const contentRef = useRef(null);
 
   useEffect(() => {
     if (post) {
@@ -770,7 +774,7 @@ function BlogPostPage({ theme, onToggleTheme }) {
     async function loadContent() {
       if (!post) return;
       if (post.contentType === "html") {
-        const loader = getHtmlModule(slug);
+        const loader = getHtmlModule(post.contentFile);
         if (loader) {
           const raw = await loader();
           const accessibleHtml = raw
@@ -781,7 +785,7 @@ function BlogPostPage({ theme, onToggleTheme }) {
           setContentHtml(accessibleHtml);
         }
       } else {
-        const loader = getMarkdownModule(slug);
+        const loader = getMarkdownModule(post.contentFile);
         if (loader) {
           const raw = await loader();
           const accessibleHtml = marked.parse(raw)
@@ -793,6 +797,61 @@ function BlogPostPage({ theme, onToggleTheme }) {
     }
     loadContent();
   }, [slug, post]);
+
+  useEffect(() => {
+    const root = contentRef.current;
+    if (!root || contentHtml === null) return;
+
+    const codeBlocks = [...root.querySelectorAll("pre")];
+    const cleanup = [];
+
+    for (const block of codeBlocks) {
+      if (block.dataset.copyReady === "true") continue;
+
+      const code = block.querySelector("code");
+      if (!code) continue;
+
+      block.dataset.copyReady = "true";
+
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "code-copy-button interactive-focus";
+      button.textContent = "Copy";
+      let copyTimerId;
+
+      const resetLabel = () => {
+        window.clearTimeout(copyTimerId);
+        copyTimerId = window.setTimeout(() => {
+          button.textContent = "Copy";
+        }, 1500);
+      };
+
+      const handleClick = async () => {
+        try {
+          await navigator.clipboard.writeText(code.innerText);
+          button.textContent = "Copied";
+          resetLabel();
+        } catch {
+          button.textContent = "Failed";
+          resetLabel();
+        }
+      };
+
+      button.addEventListener("click", handleClick);
+      block.appendChild(button);
+
+      cleanup.push(() => {
+        window.clearTimeout(copyTimerId);
+        button.removeEventListener("click", handleClick);
+        button.remove();
+        delete block.dataset.copyReady;
+      });
+    }
+
+    return () => {
+      cleanup.forEach((fn) => fn());
+    };
+  }, [contentHtml]);
 
   if (!post || contentHtml === null) {
     return (
@@ -847,6 +906,7 @@ function BlogPostPage({ theme, onToggleTheme }) {
 
           {/* Prose content */}
           <div
+            ref={contentRef}
             className="blog-content mt-12 pb-20"
             dangerouslySetInnerHTML={{ __html: contentHtml }}
           />

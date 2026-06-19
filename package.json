@@ -11,6 +11,7 @@
     "deploy": "npm run build && wrangler deploy"
   },
   "dependencies": {
+    "gray-matter": "^4.0.3",
     "highlight.js": "^11.11.1",
     "marked": "^18.0.2",
     "marked-highlight": "^2.2.4",

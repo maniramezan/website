@@ -1,6 +1,7 @@
 import { mkdir, readdir, readFile, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import matter from "gray-matter";
 
 const MEDIUM_FEED_URL = "https://medium.com/feed/@maniramezan";
 const INCLUDED_POST_SLUGS = new Set([
@@ -10,6 +11,8 @@ const INCLUDED_POST_SLUGS = new Set([
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const contentOutputDir = path.join(repoRoot, "src", "content", "blogs");
+const authoredContentDir = path.join(contentOutputDir, "authored");
+const reviewedContentDir = path.join(contentOutputDir, "reviewed");
 const generatedDir = path.join(repoRoot, "src", "generated");
 const generatedJsonPath = path.join(generatedDir, "blog-posts.json");
 
@@ -37,6 +40,49 @@ function stripTags(input) {
     .trim();
 }
 
+function stripMarkdown(input) {
+  return input
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/`([^`]+)`/g, "$1")
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, " ")
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+    .replace(/^#{1,6}\s+/gm, "")
+    .replace(/^>\s?/gm, "")
+    .replace(/[*_~]/g, "")
+    .replace(/^[-+*]\s+/gm, "")
+    .replace(/^\d+\.\s+/gm, "")
+    .replace(/\n{2,}/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function toArray(value) {
+  if (Array.isArray(value)) {
+    return value.map(String).map((item) => item.trim()).filter(Boolean);
+  }
+  if (typeof value === "string") {
+    return value.split(",").map((item) => item.trim()).filter(Boolean);
+  }
+  return [];
+}
+
+function normalizePublishedAt(value) {
+  if (!value) return null;
+  return value instanceof Date ? value.toISOString() : String(value);
+}
+
+function excerptFromMarkdown(markdown) {
+  return stripMarkdown(markdown).slice(0, 220).trim();
+}
+
+async function readOptionalFile(filePath) {
+  try {
+    return await readFile(filePath, "utf8");
+  } catch {
+    return null;
+  }
+}
+
 async function fetchText(url) {
   const response = await fetch(url, {
     headers: { "User-Agent": "manman-website-blog-sync" }
@@ -52,9 +98,60 @@ async function cleanContentDir() {
   const entries = await readdir(contentOutputDir);
   await Promise.all(
     entries
-      .filter((entry) => entry.endsWith(".md") || entry.endsWith(".html"))
+      .filter((entry) => entry.endsWith(".html"))
       .map((entry) => unlink(path.join(contentOutputDir, entry)))
   );
+}
+
+async function parseLocalMarkdownPosts() {
+  await mkdir(authoredContentDir, { recursive: true });
+  await mkdir(reviewedContentDir, { recursive: true });
+
+  const entries = await readdir(authoredContentDir);
+  const markdownEntries = entries.filter((entry) => entry.endsWith(".md") && !entry.startsWith("_"));
+
+  const posts = [];
+
+  for (const entry of markdownEntries) {
+    const authoredRaw = await readFile(path.join(authoredContentDir, entry), "utf8");
+    const authoredDoc = matter(authoredRaw);
+    const reviewedRaw = await readOptionalFile(path.join(reviewedContentDir, entry));
+    const reviewedDoc = reviewedRaw ? matter(reviewedRaw) : null;
+    const requestedVersion = String(authoredDoc.data.publishVersion || "authored").toLowerCase();
+    const publishVersion = requestedVersion === "reviewed" && reviewedDoc ? "reviewed" : "authored";
+    const selectedDoc = publishVersion === "reviewed" ? reviewedDoc : authoredDoc;
+    const selectedData = {
+      ...authoredDoc.data,
+      ...(publishVersion === "reviewed" ? reviewedDoc?.data ?? {} : {})
+    };
+
+    if (selectedData.published === false) {
+      continue;
+    }
+
+    const slug = slugify(selectedData.slug || entry.replace(/\.md$/i, ""));
+    const title = String(selectedData.title || "").trim();
+
+    if (!title) {
+      throw new Error(`Local blog post '${entry}' is missing a title in frontmatter.`);
+    }
+
+    posts.push({
+      id: `post-${slug}`,
+      slug,
+      title,
+      excerpt: String(selectedData.excerpt || excerptFromMarkdown(selectedDoc.content)),
+      topic: String(selectedData.topic || "iOS"),
+      tags: toArray(selectedData.tags),
+      url: `/blog/${slug}`,
+      publishedAt: normalizePublishedAt(selectedData.publishedAt),
+      contentType: "markdown",
+      contentFile: `${publishVersion}/${entry}`,
+      publishVersion
+    });
+  }
+
+  return posts;
 }
 
 function cleanMediumHtml(html, slug) {
@@ -137,9 +234,23 @@ function parseMediumPosts(feedXml) {
     .sort((a, b) => Date.parse(b.publishedAt || 0) - Date.parse(a.publishedAt || 0));
 }
 
-async function buildPosts() {
+async function buildMediumPosts() {
   const feedXml = await fetchText(MEDIUM_FEED_URL);
   return parseMediumPosts(feedXml);
+}
+
+async function buildPosts() {
+  const [localPosts, mediumPosts] = await Promise.all([
+    parseLocalMarkdownPosts(),
+    buildMediumPosts()
+  ]);
+
+  const postsBySlug = new Map(mediumPosts.map((post) => [post.slug, post]));
+  for (const post of localPosts) {
+    postsBySlug.set(post.slug, post);
+  }
+
+  return [...postsBySlug.values()].sort((a, b) => Date.parse(b.publishedAt || 0) - Date.parse(a.publishedAt || 0));
 }
 
 async function writeOutput(posts) {
@@ -165,8 +276,10 @@ async function main() {
     const posts = await buildPosts();
     await cleanContentDir();
     for (const post of posts) {
-      await writeFile(path.join(contentOutputDir, post.contentFile), post.htmlContent || "", "utf8");
-      delete post.htmlContent;
+      if (post.contentType === "html") {
+        await writeFile(path.join(contentOutputDir, post.contentFile), post.htmlContent || "", "utf8");
+        delete post.htmlContent;
+      }
     }
     await writeOutput(posts);
     console.log(`Synced ${posts.length} complete posts.`);
