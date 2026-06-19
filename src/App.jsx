@@ -490,9 +490,8 @@ function HomePage({ theme, onToggleTheme }) {
           <h2 className="section-kicker" style={{ color: "var(--accent-rose)" }}>About</h2>
           <div className="mt-5 space-y-4 max-w-2xl">
             <p className="text-base leading-8 text-[var(--text-muted)]">
-              Staff iOS Engineer with 12+ years building mobile applications at LinkedIn and Amazon.
-              I drive technical initiatives across multiple teams, integrate AI-assisted development
-              tools into daily workflow, and focus on developer experience improvements.
+              Staff iOS Engineer with 12+ years building iOS products at LinkedIn and Amazon.
+              I lead cross-team technical initiatives with a focus on architecture, testing, and developer experience.
             </p>
             <p className="text-base leading-8 text-[var(--text-muted)]">
               Outside of work I write about engineering patterns I&apos;ve found genuinely useful —
@@ -651,7 +650,7 @@ function ResumePage({ theme, onToggleTheme }) {
             <div>
               <div className="flex flex-wrap items-baseline gap-x-2">
                 <p className="font-display text-lg text-[var(--text-strong)]">Kodeco</p>
-                <span className="text-sm text-[var(--text-soft)]">Feb 2020 – Present</span>
+                <span className="text-sm text-[var(--text-soft)]">Feb 2020 – Feb 2026</span>
               </div>
               <ul className="mt-2 space-y-1">
                 {[

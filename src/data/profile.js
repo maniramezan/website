@@ -5,7 +5,7 @@ export const profile = {
   location: "Brooklyn, NY",
   email: "mani.ramezan@gmail.com",
   summary:
-    "Staff iOS Engineer with 12+ years building mobile applications at LinkedIn and Amazon.",
+    "Staff iOS Engineer with 12+ years building iOS products at LinkedIn and Amazon.",
   shortBio:
     "My current work centers on modular iOS architecture, rigorous testing strategies, and smoothing out day-to-day developer workflows.",
   links: {
@@ -159,12 +159,12 @@ export const resumeExperience = [
   {
     title: "Staff Software Engineer",
     company: "LinkedIn",
-    period: "Jun 2021 – Feb 2025",
+    period: "Jun 2021 – Feb 2026",
     notes: [
-      "Led greenfield fullstack project across frontend and backend teams, architecting gRPC backend services and building POCs to enable cross-team adoption.",
+      "Led a greenfield full-stack initiative across frontend and backend teams, including gRPC services and adoption-driving prototypes.",
       "Led a new app deep-linking initiative that unblocked an estimated $24M in revenue.",
       "Improved developer experience through testing infrastructure improvements, compiler plugins, architectural migrations, and modernizing LayoutTest-iOS APIs.",
-      "Led the Sponsored Messaging mobile team (both iOS and Android), mentoring engineers and conducting iOS workshops for new hires."
+      "Led the Sponsored Messaging mobile team across iOS and Android, mentoring engineers and running iOS workshops."
     ]
   },
   {
@@ -172,10 +172,9 @@ export const resumeExperience = [
     company: "Comixology (Amazon)",
     period: "Nov 2019 – Jun 2021",
     notes: [
-      "Consolidated the Comixology codebase with Amazon platforms.",
       "Designed and implemented a Swift framework to migrate legacy code.",
       "Refactored release automation scripts, reducing release time by 30%.",
-      "Created a troubleshooting wiki adopted by 40+ engineers across three teams."
+      "Created a troubleshooting guide adopted by 40+ engineers across three teams."
     ]
   },
   {
@@ -183,7 +182,7 @@ export const resumeExperience = [
     company: "Zocdoc",
     period: "Sep 2017 – Nov 2019",
     notes: [
-      "Led product ideation and implementation of iMessage and Siri integrations.",
+      "Led product ideation and delivery of iMessage and Siri integrations.",
       "Upgraded the dependency manager and modularized code, reducing compile time by 21%.",
       "Consolidated app targets (4 → 1) and refactored codebase, eliminating ~200 compile-time warnings."
     ]
@@ -194,7 +193,6 @@ export const resumeExperience = [
     period: "Sep 2015 – Sep 2017",
     notes: [
       "Onboarded six Fortune 500 customers into custom-label apps.",
-      "Implemented ticketing systems on iOS and Android.",
       "Automated build processes, reducing build times by 45% per platform."
     ]
   },
@@ -203,8 +201,8 @@ export const resumeExperience = [
     company: "Pearson",
     period: "Sep 2013 – Sep 2015",
     notes: [
-      "Collaborated with 35+ engineers across multiple teams to build cross-platform apps with Xamarin SDK.",
-      "Implemented a conflict resolution screen to support user content syncing on both iOS native and Xamarin."
+      "Collaborated with 35+ engineers to build cross-platform apps with Xamarin.",
+      "Built a conflict resolution flow for content syncing across native iOS and Xamarin apps."
     ]
   },
   {
@@ -220,9 +218,9 @@ export const resumeExperience = [
 
 export const resumeSkillGroups = [
   { label: "Languages", skills: ["Swift", "Objective-C", "Kotlin", "Java", "SQL", "JavaScript", "TypeScript"] },
-  { label: "AI Dev Tools", skills: ["GitHub Copilot", "Claude Code", "Windsurf", "Codex", "MCP", "AI Agents"] },
-  { label: "iOS & Mobile", skills: ["iOS SDK", "UIKit", "SwiftUI", "Combine", "CoreData", "Swift Concurrency", "React Native", "Android SDK"] },
-  { label: "Backend & Cloud", skills: ["gRPC", "GraphQL", "AWS Amplify", "AppSync", "DynamoDB", "Trino"] },
+  { label: "AI Tools", skills: ["GitHub Copilot", "Claude Code", "Codex", "AI Agents"] },
+  { label: "iOS & Mobile", skills: ["iOS SDK", "UIKit", "SwiftUI", "Combine", "Core Data", "Swift Concurrency", "React Native", "Android SDK"] },
+  { label: "Backend & Cloud", skills: ["gRPC", "GraphQL", "Google Cloud Platform", "AWS Amplify", "AppSync", "DynamoDB"] },
   { label: "CI/CD & DevOps", skills: ["GitHub Actions", "CircleCI", "Bitrise", "Xcode Cloud", "Fastlane", "Shell Scripting"] },
   { label: "Testing", skills: ["XCTest", "UI Automation", "Snapshot Testing", "JUnit"] }
 ];
