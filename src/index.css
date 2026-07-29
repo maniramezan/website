@@ -275,6 +275,29 @@
     color: var(--link-hover);
   }
 
+  .resume-toggle-button {
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--text-muted);
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1;
+    padding: 0.48rem 0.72rem;
+    transition:
+      border-color 150ms ease,
+      background-color 150ms ease,
+      color 150ms ease;
+  }
+
+  .resume-toggle-button:hover {
+    border-color: var(--border-strong);
+    background: var(--surface-strong);
+    color: var(--text-strong);
+  }
+
   .section-anchor {
     scroll-margin-top: 5rem;
   }

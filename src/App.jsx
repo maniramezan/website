@@ -602,6 +602,12 @@ function TalksListPage({ theme, onToggleTheme }) {
 }
 
 function ResumePage({ theme, onToggleTheme }) {
+  const [showAllOpenSource, setShowAllOpenSource] = useState(false);
+  const visibleOpenSourceProjects = showAllOpenSource
+    ? openSourceProjects
+    : openSourceProjects.slice(0, 4);
+  const hiddenOpenSourceCount = openSourceProjects.length - visibleOpenSourceProjects.length;
+
   return (
     <div className="min-h-screen text-[var(--text-strong)]">
       <a href="#main-content" className="skip-link">Skip to content</a>
@@ -691,9 +697,19 @@ function ResumePage({ theme, onToggleTheme }) {
               </ul>
             </div>
             <div>
-              <p className="font-display text-lg text-[var(--text-strong)]">Open Source</p>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <p className="font-display text-lg text-[var(--text-strong)]">Open Source</p>
+                <button
+                  type="button"
+                  className="resume-toggle-button interactive-focus"
+                  aria-expanded={showAllOpenSource}
+                  onClick={() => setShowAllOpenSource(isExpanded => !isExpanded)}
+                >
+                  {showAllOpenSource ? "Show fewer" : `Show all ${openSourceProjects.length}`}
+                </button>
+              </div>
               <ul className="mt-2 space-y-1.5">
-                {openSourceProjects.map(project => (
+                {visibleOpenSourceProjects.map(project => (
                   <li key={project.name} className="flex gap-2 text-base leading-7 text-[var(--text-muted)]">
                     <span className="shrink-0 text-[var(--text-soft)] select-none">–</span>
                     <span>
@@ -710,6 +726,11 @@ function ResumePage({ theme, onToggleTheme }) {
                   </li>
                 ))}
               </ul>
+              {!showAllOpenSource && hiddenOpenSourceCount > 0 ? (
+                <p className="mt-2 text-sm text-[var(--text-soft)]">
+                  {hiddenOpenSourceCount} more open-source projects hidden to keep the resume compact.
+                </p>
+              ) : null}
             </div>
             <div>
               <p className="font-display text-lg text-[var(--text-strong)]">Conference Speaking</p>

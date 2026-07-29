@@ -137,6 +137,54 @@ export const openSourceProjects = [
     url: "https://github.com/maniramezan/SwiftyChain"
   },
   {
+    name: "SwiftyNetwork",
+    description:
+      "Modern Swift networking library with async/await, built-in caching, authentication, and type-safe endpoints.",
+    language: "Swift",
+    stars: null,
+    url: "https://github.com/maniramezan/SwiftyNetwork"
+  },
+  {
+    name: "SwiftUIComponents",
+    description:
+      "Reusable custom components for SwiftUI apps.",
+    language: "Swift",
+    stars: null,
+    url: "https://github.com/maniramezan/SwiftUIComponents"
+  },
+  {
+    name: "SwiftCommons",
+    description:
+      "Shared Swift utilities and helpers for reusable app code.",
+    language: "Swift",
+    stars: null,
+    url: "https://github.com/maniramezan/SwiftCommons"
+  },
+  {
+    name: "ComposeUIComponents",
+    description:
+      "Reusable UI components for Kotlin and Android Compose projects.",
+    language: "Kotlin",
+    stars: null,
+    url: "https://github.com/maniramezan/ComposeUIComponents"
+  },
+  {
+    name: "kenwork",
+    description:
+      "Android networking library with caching and authentication support.",
+    language: "Kotlin",
+    stars: null,
+    url: "https://github.com/maniramezan/kenwork"
+  },
+  {
+    name: "kommon",
+    description:
+      "Kotlin-first library of helper methods focused on Android features and shared utilities.",
+    language: "Kotlin",
+    stars: null,
+    url: "https://github.com/maniramezan/kommon"
+  },
+  {
     name: "UserDefaultMacro",
     description:
       "Swift macros that reduce boilerplate when working with UserDefaults-backed storage.",
