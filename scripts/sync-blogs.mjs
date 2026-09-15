@@ -15,6 +15,9 @@ const authoredContentDir = path.join(contentOutputDir, "authored");
 const reviewedContentDir = path.join(contentOutputDir, "reviewed");
 const generatedDir = path.join(repoRoot, "src", "generated");
 const generatedJsonPath = path.join(generatedDir, "blog-posts.json");
+const publicDir = path.join(repoRoot, "public");
+const sitemapPath = path.join(publicDir, "sitemap.xml");
+const SITE_URL = "https://maniramezan.com";
 
 function slugify(value) {
   return value
@@ -262,6 +265,17 @@ async function writeOutput(posts) {
   await writeFile(generatedJsonPath, `${JSON.stringify(output, null, 2)}\n`, "utf8");
 }
 
+async function writeSitemap(posts) {
+  const staticRoutes = ["/", "/blogs", "/talks", "/resume"];
+  const postRoutes = posts.map((post) => post.url);
+  const urls = [...staticRoutes, ...postRoutes]
+    .map((route) => `  <url><loc>${SITE_URL}${route}</loc></url>`)
+    .join("\n");
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`;
+  await mkdir(publicDir, { recursive: true });
+  await writeFile(sitemapPath, xml, "utf8");
+}
+
 async function loadExistingOutput() {
   try {
     const existing = await readFile(generatedJsonPath, "utf8");
@@ -282,6 +296,7 @@ async function main() {
       }
     }
     await writeOutput(posts);
+    await writeSitemap(posts);
     console.log(`Synced ${posts.length} complete posts.`);
   } catch (error) {
     const existing = await loadExistingOutput();

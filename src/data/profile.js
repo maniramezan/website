@@ -1,13 +1,13 @@
 export const profile = {
   name: "Mani Ramezan",
   subtitle: "iOS engineer · testing, architecture, automation",
-  role: "Staff iOS Engineer",
+  role: "Founder, Arjang Consulting",
   location: "Brooklyn, NY",
-  email: "mani.ramezan@gmail.com",
+  email: "mani@arjangconsulting.com",
   summary:
-    "Staff iOS Engineer with 12+ years building iOS products at LinkedIn and Amazon.",
+    "Independent iOS engineer and founder with 12+ years building iOS products, including staff-level roles at LinkedIn and Amazon.",
   shortBio:
-    "My current work centers on modular iOS architecture, rigorous testing strategies, and smoothing out day-to-day developer workflows.",
+    "I build iOS tooling and developer-experience products through Arjang Consulting, drawing on 12+ years of staff-level iOS work. My focus is modular architecture, rigorous testing strategies, and smoothing out day-to-day developer workflows.",
   links: {
     linkedin: "https://www.linkedin.com/in/maniramezan/",
     github: "https://github.com/maniramezan",
@@ -118,7 +118,39 @@ export const openSourceProjects = [
       "Swift-native CLI and library for iOS and Android app release automation. Automates the build → archive → distribute pipeline from a single declarative Shipfile.yml, with first-class support for App Store Connect, Google Play, code signing, metadata, and AI-assisted setup.",
     language: "Swift",
     stars: null,
-    url: "https://github.com/ShipItSwifty/shipitswifty"
+    url: "https://shipitswifty.tools"
+  },
+  {
+    name: "app-store-connect-mcp",
+    description:
+      "App Store Connect + Xcode Cloud Swift client and MCP server, extracted from ShipItSwifty, for investigating CI failures with AI agents.",
+    language: "Swift",
+    stars: null,
+    url: "https://github.com/ShipItSwifty/app-store-connect-mcp"
+  },
+  {
+    name: "google-play-store-mcp",
+    description:
+      "Swift clients for Google service-account auth and the Google Play Developer API, extracted from ShipItSwifty, plus an MCP server exposing Play release state to AI agents.",
+    language: "Swift",
+    stars: null,
+    url: "https://github.com/ShipItSwifty/google-play-store-mcp"
+  },
+  {
+    name: "amoo-ai",
+    description:
+      "Tooling to interact with iOS and Android devices and simulators to author and run automated tests, including an MCP server for AI agents.",
+    language: "Swift",
+    stars: null,
+    url: "https://github.com/arjangconsulting/amoo-ai"
+  },
+  {
+    name: "moqserver",
+    description:
+      "Mock server generator with a Swift Vapor backend and a desktop app to customize API responses.",
+    language: "Kotlin",
+    stars: null,
+    url: "https://github.com/arjangconsulting/moqserver"
   },
   {
     name: "SwiftyShell",
@@ -204,6 +236,17 @@ export const podcasts = [
 ];
 
 export const resumeExperience = [
+  {
+    title: "Founder",
+    company: "Arjang Consulting LLC",
+    companyUrl: "https://arjang.consulting",
+    period: "May 2023 – Present",
+    notes: [
+      "Building [amoo-ai](https://github.com/arjangconsulting/amoo-ai), tooling to drive iOS and Android devices and simulators to author and run automated tests, including an MCP server for AI agents.",
+      "Building [moqserver](https://github.com/arjangconsulting/moqserver), a mock server generator with a Swift Vapor backend and a desktop app for customizing API responses.",
+      "Building [ShipItSwifty](https://shipitswifty.tools), Swift-native release tooling automating the build → archive → distribute pipeline for iOS and Android, including dedicated MCP servers for [Google Play](https://github.com/ShipItSwifty/google-play-store-mcp) and [App Store Connect / Xcode Cloud](https://github.com/ShipItSwifty/app-store-connect-mcp) that expose release and CI state to AI agents."
+    ]
+  },
   {
     title: "Staff Software Engineer",
     company: "LinkedIn",

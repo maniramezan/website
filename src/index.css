@@ -19,7 +19,7 @@
     --text-soft: #6b6165;
     --accent-rose: #9a4651;
     --accent-lilac: #6b5798;
-    --accent-sage: #4b6f59;
+    --accent-sage: #3f5e4a;
     --accent-rose-wash: rgba(183, 93, 105, 0.12);
     --accent-lilac-wash: rgba(137, 120, 183, 0.12);
     --accent-sage-wash: rgba(95, 135, 113, 0.14);
@@ -300,6 +300,92 @@
 
   .section-anchor {
     scroll-margin-top: 5rem;
+  }
+
+  .hero-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-radius: 999px;
+    padding: 0.75rem 1.35rem;
+    font-size: 0.92rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition:
+      transform 150ms ease,
+      border-color 150ms ease,
+      background-color 150ms ease,
+      color 150ms ease,
+      box-shadow 150ms ease;
+  }
+
+  .hero-cta:hover {
+    transform: translateY(-2px);
+  }
+
+  .hero-cta-primary {
+    color: #fff7fa;
+    background: linear-gradient(135deg, var(--accent-lilac), var(--accent-rose));
+    box-shadow: 0 12px 28px -10px var(--accent-lilac);
+  }
+
+  .hero-cta-primary:hover {
+    box-shadow: 0 16px 34px -10px var(--accent-lilac);
+  }
+
+  html[data-theme="dark"] .hero-cta-primary {
+    color: #181a1f;
+  }
+
+  .hero-cta-secondary {
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-strong);
+  }
+
+  .hero-cta-secondary:hover {
+    border-color: var(--border-strong);
+    background: var(--surface-strong);
+  }
+
+  .ambient-orbs {
+    position: absolute;
+    inset: -4rem -2rem auto -2rem;
+    height: 26rem;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  .ambient-orb {
+    position: absolute;
+    border-radius: 999px;
+    filter: blur(60px);
+    opacity: 0.55;
+  }
+
+  .ambient-orb-rose {
+    top: -4rem;
+    left: -2rem;
+    width: 16rem;
+    height: 16rem;
+    background: var(--accent-rose-wash);
+  }
+
+  .ambient-orb-lilac {
+    top: -2rem;
+    right: -3rem;
+    width: 18rem;
+    height: 18rem;
+    background: var(--accent-lilac-wash);
+  }
+
+  .ambient-orb-sage {
+    top: 8rem;
+    left: 30%;
+    width: 14rem;
+    height: 14rem;
+    background: var(--accent-sage-wash);
   }
   .sr-only {
     position: absolute;
