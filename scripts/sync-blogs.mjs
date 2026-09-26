@@ -269,10 +269,15 @@ async function writeOutput(posts) {
 }
 
 async function writeSitemap(posts) {
-  const staticRoutes = ["/", "/blogs", "/talks", "/resume"];
-  const postRoutes = posts.map((post) => post.url);
+  const staticRoutes = ["/", "/blogs", "/talks", "/resume"].map((route) => ({ route }));
+  const postRoutes = posts.map((post) => ({
+    route: post.url,
+    lastmod: post.publishedAt ? new Date(post.publishedAt).toISOString().slice(0, 10) : null
+  }));
   const urls = [...staticRoutes, ...postRoutes]
-    .map((route) => `  <url><loc>${SITE_URL}${route}</loc></url>`)
+    .map(({ route, lastmod }) =>
+      `  <url><loc>${SITE_URL}${route}</loc>${lastmod ? `<lastmod>${lastmod}</lastmod>` : ""}</url>`
+    )
     .join("\n");
   const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`;
   await mkdir(publicDir, { recursive: true });

@@ -8,7 +8,7 @@ Shared guidance for all AI agents working in this repository.
 npm install           # install dependencies
 npm run sync:blogs    # merge local markdown posts with selected Medium posts
 npm run dev           # sync blogs, then start dev server (localhost:5173)
-npm run build         # sync blogs, vite build, then prerender per-route <head> meta into dist/
+npm run build         # sync blogs, client + SSR builds, then prerender every route into dist/
 npm run preview       # serve the built dist/
 ```
 
@@ -22,7 +22,7 @@ This is a single-page React app with no backend. Nearly all component and routin
 
 ```
 src/data/profile.js                 ← primary editable content (profile, talks, projects, socials)
-src/seo.js                          ← per-route title/description/canonical; shared by App.jsx and the prerender script
+src/seo.js                          ← per-route title/description/canonical + JSON-LD; shared by App.jsx and the prerender script
 src/markdown.js                     ← marked + highlight.js setup; dynamically imported, not eager
 src/motion-features.js              ← Motion's domMax features, lazy-loaded by <LazyMotion>
 src/content/blogs/authored/*.md     ← human-written source posts with frontmatter
@@ -33,14 +33,24 @@ scripts/sync-blogs.mjs              ← runs at build/dev time; fetches Medium R
   → src/generated/blog-posts.json   ← post index consumed by the app at runtime
   → public/sitemap.xml              ← generated sitemap
 src/App.jsx                         ← imports blog-posts.json and lazily loads content files
-scripts/prerender-meta.mjs          ← post-build: writes dist/<route>.html with that route's <head> meta
+src/entry-server.jsx                ← build-time renderer (StaticRouter + Site) used by the prerender
+scripts/prerender.mjs               ← post-build: writes dist/<route>.html with rendered markup, <head> meta, and JSON-LD
 ```
 
 Only the top level of `src/content/blogs/` is globbed by the app, so drafts (`published: false`) in `authored/` and `reviewed/` never ship.
 
-### Metadata and hosting
+### Prerendering, metadata, and hosting
 
-`index.html` has a `<!-- page-meta:start/end -->` block (title, description, canonical, Open Graph, Twitter). `scripts/prerender-meta.mjs` rewrites it per route from `src/seo.js`, writing `dist/blogs.html`, `dist/blog/<slug>.html`, etc., so link previews and non-JS crawlers see the right tags. On the client, `usePageMeta()` in `App.jsx` updates the same tags on navigation; every page component must call it. Add new static routes to `pageMeta` in `src/seo.js`.
+Every route is prerendered at build time. `vite build --ssr src/entry-server.jsx` produces `dist-server/`, and `scripts/prerender.mjs` renders each route (static pages from `pageMeta`, plus every post) into `dist/<route>.html`, e.g. `dist/blogs.html`, `dist/blog/<slug>.html`. Each file gets the rendered markup inside `<div id="root" data-prerendered-path="…">` and a rewritten `<!-- page-meta:start/end -->` block (title, description, canonical, Open Graph, Twitter, JSON-LD) from `src/seo.js`.
+
+`main.jsx` hydrates when `data-prerendered-path` matches the current path; otherwise (dev server, or `index.html` served for an unknown path) it clears the markup and renders client-side. Keep the render deterministic so hydration matches:
+
+- No `window`/`document` access during render or at module scope in `App.jsx` — only in effects, event handlers, or guarded helpers.
+- The theme is read through `useSyncExternalStore`, with `"light"` as the server snapshot.
+- Dates use `postDateFormatter` (fixed `en-US` locale, UTC).
+- Post bodies come from `PrerenderedPostContext` on the server; on the client, `initialPostHtml()` reuses the body already in the page.
+
+On the client, `usePageMeta()` in `App.jsx` updates title, description, canonical, and OG tags on navigation; every page component must call it. Add new static routes to `pageMeta` in `src/seo.js`. JSON-LD is only emitted in the prerendered HTML: `ProfilePage` + `Person` on `/` and `/resume`, `BlogPosting` on posts, `WebPage` elsewhere. The single `Person` entity (`#person`) lists `profile.links` as `sameAs`, and social icons use `rel="me"`.
 
 The site deploys to Cloudflare Workers static assets (`wrangler.toml`). `not_found_handling = "single-page-application"` serves `index.html` for unknown paths so client routes don't 404.
 

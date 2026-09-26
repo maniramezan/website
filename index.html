@@ -31,8 +31,8 @@
       rel="stylesheet"
     />
 
-    <!-- Everything between the page-meta markers is rewritten per route by
-         scripts/prerender-meta.mjs (from src/seo.js); these are the home values for dev. -->
+    <!-- Everything between the page-meta markers (including JSON-LD) is rewritten per
+         route by scripts/prerender.mjs from src/seo.js; these are the home values for dev. -->
     <!-- page-meta:start -->
     <title>Mani Ramezan — Founder, Arjang Consulting</title>
     <meta name="description" content="Mani Ramezan — founder of Arjang Consulting and mobile tech lead at Capital One. Writing and talks on mobile architecture, testing, CI/CD, and AI-assisted development." />
@@ -52,29 +52,6 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@maniramezan" />
     <meta name="twitter:image" content="https://maniramezan.com/og-image.png" />
-
-    <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@type": "Person",
-        "name": "Mani Ramezan",
-        "url": "https://maniramezan.com/",
-        "jobTitle": "Founder, Arjang Consulting",
-        "worksFor": {
-          "@type": "Organization",
-          "name": "Arjang Consulting",
-          "url": "https://arjang.consulting"
-        },
-        "sameAs": [
-          "https://www.linkedin.com/in/maniramezan/",
-          "https://github.com/maniramezan",
-          "https://x.com/maniramezan",
-          "https://bsky.app/profile/maniramezan.bsky.social",
-          "https://mastodon.social/@maanmaan",
-          "https://speakerdeck.com/maniramezan"
-        ]
-      }
-    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { flushSync } from "react-dom";
 import {
   HiOutlineArrowRight,
@@ -67,6 +67,34 @@ const withPreTabIndex = html => html
   .replace(/<pre>/g, '<pre tabindex="0">')
   .replace(/<pre /g, '<pre tabindex="0" ');
 
+// Returns a post's final body HTML. Used by BlogPostPage on the client and by
+// src/entry-server.jsx when prerendering posts at build time.
+export async function loadPostHtml(post) {
+  const loader = getContentLoader(post);
+  if (!loader) throw new Error(`No bundled content for ${post.contentFile}`);
+  if (post.contentType === "html") {
+    const raw = await loader();
+    // Medium emits its own heading levels; flatten them to keep one h1 on the page.
+    const accessibleHtml = raw
+      .replace(/<h[2-6]/g, "<h2")
+      .replace(/<\/h[2-6]>/g, "</h2>");
+    return withPreTabIndex(accessibleHtml);
+  }
+  const [{ renderMarkdown }, raw] = await Promise.all([loadMarkdownModule(), loader()]);
+  return withPreTabIndex(renderMarkdown(raw));
+}
+
+// Set by the build-time prerender so a post's body is part of the static HTML.
+export const PrerenderedPostContext = createContext(null);
+
+function initialPostHtml(prerenderedPost, slug) {
+  if (prerenderedPost?.slug === slug) return prerenderedPost.html;
+  if (typeof document === "undefined") return null;
+  // First client render of a prerendered post: reuse the body already in the page so
+  // hydration matches and the post isn't fetched twice.
+  return document.querySelector(`[data-post-slug="${slug}"]`)?.innerHTML ?? null;
+}
+
 const socialIcons = {
   linkedin: FaLinkedin,
   github: SiGithub,
@@ -90,7 +118,9 @@ const socialPalette = {
 // Keep the storage key and colours in sync with the inline script in index.html.
 const themeStorageKey = "mani-theme";
 const themeColors = { light: "#f6f1ec", dark: "#1c1719" };
-const postDateFormatter = new Intl.DateTimeFormat(undefined, {
+// Fixed locale and time zone so build-time HTML and the browser agree.
+const postDateFormatter = new Intl.DateTimeFormat("en-US", {
+  timeZone: "UTC",
   year: "numeric",
   month: "short",
   day: "numeric"
@@ -117,18 +147,29 @@ function systemTheme() {
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
-function getInitialTheme() {
-  // index.html applies the theme before first paint; start from what it chose.
-  const applied = document.documentElement.dataset.theme;
-  if (applied === "light" || applied === "dark") return applied;
-  return readSavedTheme() ?? systemTheme();
+// <html data-theme> is the source of truth: index.html sets it before first paint and
+// setTheme updates it. Prerendered HTML is always built as "light"; useSyncExternalStore
+// hydrates with that and then re-renders with the real theme.
+const themeListeners = new Set();
+
+function subscribeTheme(listener) {
+  themeListeners.add(listener);
+  return () => themeListeners.delete(listener);
 }
 
-function applyTheme(theme) {
+function getThemeSnapshot() {
+  const applied = document.documentElement.dataset.theme;
+  return applied === "light" || applied === "dark" ? applied : readSavedTheme() ?? systemTheme();
+}
+
+const getServerThemeSnapshot = () => "light";
+
+function setTheme(theme) {
   const root = document.documentElement;
   root.dataset.theme = theme;
   root.style.colorScheme = theme;
   document.querySelector('meta[name="theme-color"]')?.setAttribute("content", themeColors[theme]);
+  themeListeners.forEach(listener => listener());
 }
 
 /* ── Page metadata ──────────────────────────────────────────────── */
@@ -291,7 +332,7 @@ function SocialIconLink({ id, label, url, small = false, tiny = false }) {
     <a
       href={url}
       target="_blank"
-      rel="noreferrer"
+      rel="me noreferrer"
       aria-label={label}
       title={label}
       className="social-link interactive-focus"
@@ -556,8 +597,7 @@ function YouTubeEmbed({ videoId, start, title, playing, onPlay }) {
         ref={iframeRef}
         src={`https://www.youtube-nocookie.com/embed/${videoId}?${params}`}
         title={title}
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        allowFullScreen
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
         className="absolute inset-0 w-full h-full border-0"
       />
     );
@@ -610,7 +650,6 @@ function TalkCard({ talk }) {
             src={`https://speakerdeck.com/player/${talk.speakerDeckId}`}
             title={talk.title}
             allow="fullscreen"
-            allowFullScreen
             loading="lazy"
             className="absolute inset-0 w-full h-full border-0"
             style={{ background: "var(--surface-alt)" }}
@@ -1084,37 +1123,28 @@ const skeletonLineWidths = ["100%", "96%", "98%", "72%", "100%", "94%", "58%"];
 function BlogPostPage() {
   const { slug } = useParams();
   const post = blogData.posts.find(entry => entry.slug === slug);
-  const [contentHtml, setContentHtml] = useState(null);
+  const prerenderedPost = useContext(PrerenderedPostContext);
+  const [contentHtml, setContentHtml] = useState(() => initialPostHtml(prerenderedPost, slug));
   const [loadFailed, setLoadFailed] = useState(false);
   const contentRef = useRef(null);
+  const hasInitialContent = contentHtml !== null;
   usePageMeta(post ? postMeta(post) : notFoundMeta);
 
   useEffect(() => {
-    if (!post) return;
+    if (!post || hasInitialContent) return;
     let active = true;
-    async function loadContent() {
-      const loader = getContentLoader(post);
-      if (!loader) throw new Error(`No bundled content for ${post.contentFile}`);
-      if (post.contentType === "html") {
-        const raw = await loader();
-        // Medium emits its own heading levels; flatten them to keep one h1 on the page.
-        const accessibleHtml = raw
-          .replace(/<h[2-6]/g, "<h2")
-          .replace(/<\/h[2-6]>/g, "</h2>");
-        if (active) setContentHtml(withPreTabIndex(accessibleHtml));
-      } else {
-        const [{ renderMarkdown }, raw] = await Promise.all([loadMarkdownModule(), loader()]);
-        if (active) setContentHtml(withPreTabIndex(renderMarkdown(raw)));
-      }
-    }
-    // A failed chunk load usually means a deploy replaced the old assets; a reload fixes it.
-    loadContent().catch(() => {
-      if (active) setLoadFailed(true);
-    });
+    loadPostHtml(post)
+      .then(html => {
+        if (active) setContentHtml(html);
+      })
+      // A failed chunk load usually means a deploy replaced the old assets; a reload fixes it.
+      .catch(() => {
+        if (active) setLoadFailed(true);
+      });
     return () => {
       active = false;
     };
-  }, [post]);
+  }, [post, hasInitialContent]);
 
   useEffect(() => {
     const root = contentRef.current;
@@ -1214,6 +1244,7 @@ function BlogPostPage() {
           {contentHtml !== null ? (
             <div
               ref={contentRef}
+              data-post-slug={post.slug}
               className="blog-content mt-12 pb-20"
               dangerouslySetInnerHTML={{ __html: contentHtml }}
             />
@@ -1359,12 +1390,10 @@ function AnimatedRoutes() {
   );
 }
 
-export default function App() {
-  const [theme, setTheme] = useState(getInitialTheme);
-
-  useEffect(() => {
-    applyTheme(theme);
-  }, [theme]);
+// Everything inside the router. The browser wraps it in BrowserRouter (App below);
+// src/entry-server.jsx wraps it in StaticRouter to prerender each route.
+export function Site() {
+  const theme = useSyncExternalStore(subscribeTheme, getThemeSnapshot, getServerThemeSnapshot);
 
   // Follow the OS setting until the visitor picks a theme explicitly.
   useEffect(() => {
@@ -1381,10 +1410,7 @@ export default function App() {
   const toggleTheme = event => {
     const nextTheme = theme === "dark" ? "light" : "dark";
     saveTheme(nextTheme);
-    const commit = () => {
-      flushSync(() => setTheme(nextTheme));
-      applyTheme(nextTheme);
-    };
+    const commit = () => flushSync(() => setTheme(nextTheme));
 
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (!document.startViewTransition || reduceMotion) {
@@ -1411,13 +1437,19 @@ export default function App() {
   return (
     <LazyMotion features={loadMotionFeatures} strict>
       <MotionConfig reducedMotion="user">
-        <BrowserRouter>
-          <PageTracker />
-          <Layout theme={theme} onToggleTheme={toggleTheme}>
-            <AnimatedRoutes />
-          </Layout>
-        </BrowserRouter>
+        <PageTracker />
+        <Layout theme={theme} onToggleTheme={toggleTheme}>
+          <AnimatedRoutes />
+        </Layout>
       </MotionConfig>
     </LazyMotion>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Site />
+    </BrowserRouter>
   );
 }

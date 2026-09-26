@@ -12,7 +12,7 @@ export const profile = {
     twitter: "https://x.com/maniramezan",
     bluesky: "https://bsky.app/profile/maniramezan.bsky.social",
     mastodon: "https://mastodon.social/@maanmaan",
-    medium: "http://medium.com/@maniramezan"
+    medium: "https://medium.com/@maniramezan"
   }
 };
 
