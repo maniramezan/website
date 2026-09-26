@@ -3,12 +3,24 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta
-      name="description"
-      content="Mani Ramezan — iOS engineer & founder of Arjang Consulting. Writing and talks on iOS architecture, testing, and developer tooling."
-    />
     <meta name="theme-color" content="#f6f1ec" />
-    <link rel="canonical" href="https://maniramezan.com/" />
+    <script>
+      // Apply the saved (or system) theme before first paint so dark-mode visitors
+      // never see a light flash. Keep the key and colours in sync with App.jsx.
+      (function () {
+        try {
+          var saved = localStorage.getItem("mani-theme");
+          var theme = saved === "light" || saved === "dark"
+            ? saved
+            : matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+          var root = document.documentElement;
+          root.dataset.theme = theme;
+          root.style.colorScheme = theme;
+          document.querySelector('meta[name="theme-color"]')
+            .setAttribute("content", theme === "dark" ? "#1c1719" : "#f6f1ec");
+        } catch (e) {}
+      })();
+    </script>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="icon" href="/favicon-32x32.png" sizes="32x32" type="image/png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
@@ -19,26 +31,25 @@
       rel="stylesheet"
     />
 
-    <!-- Open Graph -->
+    <!-- Everything between the page-meta markers is rewritten per route by
+         scripts/prerender-meta.mjs (from src/seo.js); these are the home values for dev. -->
+    <!-- page-meta:start -->
+    <title>Mani Ramezan — Founder, Arjang Consulting</title>
+    <meta name="description" content="Mani Ramezan — founder of Arjang Consulting and mobile tech lead at Capital One. Writing and talks on mobile architecture, testing, CI/CD, and AI-assisted development." />
+    <link rel="canonical" href="https://maniramezan.com/" />
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="Mani Ramezan" />
-    <meta property="og:title" content="Mani Ramezan — iOS Engineer & Founder" />
-    <meta
-      property="og:description"
-      content="Writing and talks on iOS architecture, testing, and developer tooling."
-    />
+    <meta property="og:title" content="Mani Ramezan — Founder, Arjang Consulting" />
+    <meta property="og:description" content="Mani Ramezan — founder of Arjang Consulting and mobile tech lead at Capital One. Writing and talks on mobile architecture, testing, CI/CD, and AI-assisted development." />
     <meta property="og:url" content="https://maniramezan.com/" />
+    <meta name="twitter:title" content="Mani Ramezan — Founder, Arjang Consulting" />
+    <meta name="twitter:description" content="Mani Ramezan — founder of Arjang Consulting and mobile tech lead at Capital One. Writing and talks on mobile architecture, testing, CI/CD, and AI-assisted development." />
+    <!-- page-meta:end -->
+
+    <meta property="og:site_name" content="Mani Ramezan" />
     <meta property="og:image" content="https://maniramezan.com/og-image.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-
-    <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Mani Ramezan — iOS Engineer & Founder" />
-    <meta
-      name="twitter:description"
-      content="Writing and talks on iOS architecture, testing, and developer tooling."
-    />
     <meta name="twitter:site" content="@maniramezan" />
     <meta name="twitter:image" content="https://maniramezan.com/og-image.png" />
 
@@ -49,6 +60,11 @@
         "name": "Mani Ramezan",
         "url": "https://maniramezan.com/",
         "jobTitle": "Founder, Arjang Consulting",
+        "worksFor": {
+          "@type": "Organization",
+          "name": "Arjang Consulting",
+          "url": "https://arjang.consulting"
+        },
         "sameAs": [
           "https://www.linkedin.com/in/maniramezan/",
           "https://github.com/maniramezan",
@@ -59,8 +75,6 @@
         ]
       }
     </script>
-
-    <title>Mani Ramezan</title>
   </head>
   <body>
     <div id="root"></div>

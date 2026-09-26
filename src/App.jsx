@@ -1,28 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { marked } from "marked";
-import { markedHighlight } from "marked-highlight";
-import hljs from "highlight.js/lib/core";
-import swift from "highlight.js/lib/languages/swift";
-import kotlin from "highlight.js/lib/languages/kotlin";
-import objectivec from "highlight.js/lib/languages/objectivec";
-import bash from "highlight.js/lib/languages/bash";
-import javascript from "highlight.js/lib/languages/javascript";
-import typescript from "highlight.js/lib/languages/typescript";
-import json from "highlight.js/lib/languages/json";
-import yaml from "highlight.js/lib/languages/yaml";
-import xml from "highlight.js/lib/languages/xml";
-import "highlight.js/styles/github-dark-dimmed.css";
-
-hljs.registerLanguage("swift", swift);
-hljs.registerLanguage("kotlin", kotlin);
-hljs.registerLanguage("objectivec", objectivec);
-hljs.registerLanguage("bash", bash);
-hljs.registerLanguage("shell", bash);
-hljs.registerLanguage("javascript", javascript);
-hljs.registerLanguage("typescript", typescript);
-hljs.registerLanguage("json", json);
-hljs.registerLanguage("yaml", yaml);
-hljs.registerLanguage("xml", xml);
+import { flushSync } from "react-dom";
 import {
   HiOutlineArrowRight,
   HiOutlineBars3,
@@ -30,6 +7,7 @@ import {
   HiOutlineMoon,
   HiOutlineSun,
   HiOutlineXMark,
+  HiPlay,
 } from "react-icons/hi2";
 import { FaLinkedin } from "react-icons/fa6";
 import {
@@ -40,46 +18,23 @@ import {
   SiX
 } from "react-icons/si";
 import { BrowserRouter, Link, Route, Routes, useLocation, useParams } from "react-router-dom";
-import { AnimatePresence, motion, MotionConfig } from "motion/react";
-import posthog from "posthog-js";
+import { AnimatePresence, LazyMotion, m, MotionConfig, useScroll, useSpring } from "motion/react";
 import blogData from "./generated/blog-posts.json";
+import { canonicalUrl, notFoundMeta, pageMeta, postMeta } from "./seo";
 
-posthog.init(import.meta.env.VITE_POSTHOG_KEY, {
-  api_host: "https://us.i.posthog.com",
-  // Only capture explicit pageview events — no clicks, forms, or inputs
-  autocapture: false,
-  capture_pageview: false,
-  // No session recordings or heatmaps
-  disable_session_recording: true,
-  disable_heatmaps: true,
-  // Store nothing in cookies or localStorage — memory only
-  persistence: "memory",
-  // Honour the browser's Do Not Track setting
-  respect_dnt: true,
-});
 import {
   podcasts,
   profile,
-  openSourceProjects,
-  resumeEducation,
+  openSourceGroups,
   resumeExperience,
   resumeSkillGroups,
   socials,
   talks
 } from "./data/profile";
 
-marked.use(markedHighlight({
-  langPrefix: "hljs language-",
-  highlight(code, lang) {
-    const language = hljs.getLanguage(lang) ? lang : "plaintext";
-    return hljs.highlight(code, { language }).value;
-  }
-}));
-
-const markdownModules = import.meta.glob([
-  "./content/blogs/**/*.md",
-  "!./content/blogs/**/_*.md"
-], {
+// Only the top level of content/blogs is globbed: sync-blogs writes published posts
+// there, so drafts in authored/ and reviewed/ never end up in the bundle.
+const markdownModules = import.meta.glob("./content/blogs/*.md", {
   query: "?raw",
   import: "default",
   eager: false
@@ -91,15 +46,26 @@ const htmlModules = import.meta.glob("./content/blogs/*.html", {
   eager: false
 });
 
-const getMarkdownModule = (contentFile) => {
-  const path = Object.keys(markdownModules).find((p) => p.endsWith(contentFile));
-  return path ? markdownModules[path] : null;
+const getContentLoader = post =>
+  (post.contentType === "html" ? htmlModules : markdownModules)[`./content/blogs/${post.contentFile}`];
+
+// Motion's animation features (including layout animations for the nav pill) load
+// in their own chunk; `m.*` components render immediately and animate once it lands.
+const loadMotionFeatures = () => import("./motion-features").then(module => module.default);
+
+// marked + highlight.js are only needed for markdown posts, so they are fetched
+// on demand and cached, keeping ~100 kB off the initial bundle.
+let markdownModule = null;
+const loadMarkdownModule = () => {
+  if (!markdownModule) markdownModule = import("./markdown");
+  return markdownModule;
 };
 
-const getHtmlModule = (contentFile) => {
-  const path = Object.keys(htmlModules).find(p => p.endsWith(contentFile));
-  return path ? htmlModules[path] : null;
-};
+// Both Medium HTML and marked output need focusable <pre> blocks so code blocks
+// can be scrolled by keyboard.
+const withPreTabIndex = html => html
+  .replace(/<pre>/g, '<pre tabindex="0">')
+  .replace(/<pre /g, '<pre tabindex="0" ');
 
 const socialIcons = {
   linkedin: FaLinkedin,
@@ -110,57 +76,93 @@ const socialIcons = {
   speakerDeck: SiSpeakerdeck
 };
 
+// Brand colours only appear on hover; darkColor is a lighter variant that keeps
+// at least 3:1 contrast on the dark surfaces.
 const socialPalette = {
-  linkedin: {
-    color: "#0A66C2",
-    background: "rgba(10, 102, 194, 0.12)",
-    border: "rgba(10, 102, 194, 0.24)"
-  },
-  github: {
-    color: "#24292F",
-    background: "rgba(36, 41, 47, 0.1)",
-    border: "rgba(36, 41, 47, 0.2)",
-    darkColor: "#F0F6FC",
-    darkBackground: "rgba(240, 246, 252, 0.08)",
-    darkBorder: "rgba(240, 246, 252, 0.18)"
-  },
-  twitter: {
-    color: "#111111",
-    background: "rgba(17, 17, 17, 0.08)",
-    border: "rgba(17, 17, 17, 0.18)",
-    darkColor: "#F5F5F5",
-    darkBackground: "rgba(245, 245, 245, 0.08)",
-    darkBorder: "rgba(245, 245, 245, 0.18)"
-  },
-  bluesky: {
-    color: "#1185FE",
-    background: "rgba(17, 133, 254, 0.12)",
-    border: "rgba(17, 133, 254, 0.24)"
-  },
-  mastodon: {
-    color: "#6364FF",
-    background: "rgba(99, 100, 255, 0.12)",
-    border: "rgba(99, 100, 255, 0.24)"
-  },
-  speakerDeck: {
-    color: "#05998B",
-    background: "rgba(5, 153, 139, 0.12)",
-    border: "rgba(5, 153, 139, 0.24)"
-  }
+  linkedin: { color: "#0A66C2", darkColor: "#5AA4F0" },
+  github: { color: "#24292F", darkColor: "#F0F6FC" },
+  twitter: { color: "#111111", darkColor: "#F5F5F5" },
+  bluesky: { color: "#1185FE", darkColor: "#4DA3FF" },
+  mastodon: { color: "#6364FF", darkColor: "#8C8DFF" },
+  speakerDeck: { color: "#05998B", darkColor: "#2EC4B4" }
 };
 
+// Keep the storage key and colours in sync with the inline script in index.html.
 const themeStorageKey = "mani-theme";
+const themeColors = { light: "#f6f1ec", dark: "#1c1719" };
 const postDateFormatter = new Intl.DateTimeFormat(undefined, {
   year: "numeric",
   month: "short",
   day: "numeric"
 });
 
-function getInitialTheme() {
-  if (typeof window === "undefined") return "light";
-  const saved = window.localStorage.getItem(themeStorageKey);
-  if (saved === "light" || saved === "dark") return saved;
+function readSavedTheme() {
+  try {
+    const saved = window.localStorage.getItem(themeStorageKey);
+    return saved === "light" || saved === "dark" ? saved : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveTheme(theme) {
+  try {
+    window.localStorage.setItem(themeStorageKey, theme);
+  } catch {
+    // Storage can be unavailable (private mode, blocked site data); the toggle still works for this visit.
+  }
+}
+
+function systemTheme() {
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
+function getInitialTheme() {
+  // index.html applies the theme before first paint; start from what it chose.
+  const applied = document.documentElement.dataset.theme;
+  if (applied === "light" || applied === "dark") return applied;
+  return readSavedTheme() ?? systemTheme();
+}
+
+function applyTheme(theme) {
+  const root = document.documentElement;
+  root.dataset.theme = theme;
+  root.style.colorScheme = theme;
+  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", themeColors[theme]);
+}
+
+/* ── Page metadata ──────────────────────────────────────────────── */
+
+function setHeadAttribute(selector, attribute, value) {
+  document.head.querySelector(selector)?.setAttribute(attribute, value);
+}
+
+// Keeps <head> in step with client-side navigation. The same values are baked into
+// per-route HTML at build time by scripts/prerender-meta.mjs.
+function usePageMeta({ title, description, type = "website", noindex = false }) {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    const url = canonicalUrl(pathname.replace(/\/+$/, "") || "/");
+    document.title = title;
+    setHeadAttribute('meta[name="description"]', "content", description);
+    setHeadAttribute('link[rel="canonical"]', "href", url);
+    setHeadAttribute('meta[property="og:type"]', "content", type);
+    setHeadAttribute('meta[property="og:title"]', "content", title);
+    setHeadAttribute('meta[property="og:description"]', "content", description);
+    setHeadAttribute('meta[property="og:url"]', "content", url);
+    setHeadAttribute('meta[name="twitter:title"]', "content", title);
+    setHeadAttribute('meta[name="twitter:description"]', "content", description);
+
+    let robots = document.head.querySelector('meta[name="robots"]');
+    if (noindex && !robots) {
+      robots = document.createElement("meta");
+      robots.name = "robots";
+      robots.content = "noindex";
+      document.head.appendChild(robots);
+    } else if (!noindex && robots) {
+      robots.remove();
+    }
+  }, [pathname, title, description, type, noindex]);
 }
 
 // Maps blog topic labels to tag color variants
@@ -230,19 +232,11 @@ function toUpperPreserved(str) {
 }
 
 function Tag({ label, color = "sage" }) {
-  return (
-    <motion.span
-      className={`tag tag-${color}`}
-      whileHover={{ scale: 1.06, y: -1 }}
-      transition={{ type: "spring", stiffness: 400, damping: 20 }}
-    >
-      {toUpperPreserved(label)}
-    </motion.span>
-  );
+  return <span className={`tag tag-${color}`}>{toUpperPreserved(label)}</span>;
 }
 
 // Fades/slides content in the moment it scrolls into view, once.
-function Reveal({ children, delay = 0, className, as: Component = motion.div, y = 22, ...rest }) {
+function Reveal({ children, delay = 0, className, as: Component = m.div, y = 22, ...rest }) {
   return (
     <Component
       className={className}
@@ -261,7 +255,7 @@ function ThemeToggle({ theme, onToggleTheme }) {
   const nextTheme = theme === "dark" ? "light" : "dark";
   const Icon = theme === "dark" ? HiOutlineSun : HiOutlineMoon;
   return (
-    <motion.button
+    <m.button
       type="button"
       onClick={onToggleTheme}
       className="theme-button interactive-focus"
@@ -272,7 +266,7 @@ function ThemeToggle({ theme, onToggleTheme }) {
       transition={{ type: "spring", stiffness: 400, damping: 17 }}
     >
       <AnimatePresence mode="wait" initial={false}>
-        <motion.span
+        <m.span
           key={theme}
           className="inline-flex"
           initial={{ opacity: 0, rotate: -90, scale: 0.5 }}
@@ -281,9 +275,9 @@ function ThemeToggle({ theme, onToggleTheme }) {
           transition={{ duration: 0.25, ease: "easeOut" }}
         >
           <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
-        </motion.span>
+        </m.span>
       </AnimatePresence>
-    </motion.button>
+    </m.button>
   );
 }
 
@@ -303,11 +297,7 @@ function SocialIconLink({ id, label, url, small = false, tiny = false }) {
       className="social-link interactive-focus"
       style={{
         "--social-color": palette?.color,
-        "--social-bg": palette?.background,
-        "--social-border": palette?.border,
-        "--social-color-dark": palette?.darkColor ?? palette?.color,
-        "--social-bg-dark": palette?.darkBackground ?? palette?.background,
-        "--social-border-dark": palette?.darkBorder ?? palette?.border,
+        "--social-color-dark": palette?.darkColor,
         ...sizeStyle
       }}
     >
@@ -332,25 +322,14 @@ const fadeUp = {
   show: { opacity: 1, y: 0, transition: { duration: 0.55, ease: [0.16, 1, 0.3, 1] } }
 };
 
-// Slow-drifting gradient blobs behind the hero — purely decorative, ignored by prefers-reduced-motion via MotionConfig.
+// Slow-drifting gradient blobs behind the hero — purely decorative. The drift is a
+// CSS animation (compositor-only) that the reduced-motion rule in index.css stops.
 function AmbientOrbs() {
   return (
     <div className="ambient-orbs" aria-hidden="true">
-      <motion.div
-        className="ambient-orb ambient-orb-rose"
-        animate={{ x: [0, 24, -12, 0], y: [0, -18, 14, 0] }}
-        transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
-      />
-      <motion.div
-        className="ambient-orb ambient-orb-lilac"
-        animate={{ x: [0, -20, 16, 0], y: [0, 20, -10, 0] }}
-        transition={{ duration: 26, repeat: Infinity, ease: "easeInOut" }}
-      />
-      <motion.div
-        className="ambient-orb ambient-orb-sage"
-        animate={{ x: [0, 16, -18, 0], y: [0, -14, 18, 0] }}
-        transition={{ duration: 30, repeat: Infinity, ease: "easeInOut" }}
-      />
+      <div className="ambient-orb ambient-orb-rose" />
+      <div className="ambient-orb ambient-orb-lilac" />
+      <div className="ambient-orb ambient-orb-sage" />
     </div>
   );
 }
@@ -362,19 +341,22 @@ const navItems = [
   { to: "/resume", label: "Resume" }
 ];
 
-function NavLink({ to, label, onClick, className = "" }) {
-  const location = useLocation();
-  const isActive = to === "/" ? location.pathname === "/" : location.pathname.startsWith(to);
+function useIsActiveRoute(to) {
+  const { pathname } = useLocation();
+  return to === "/" ? pathname === "/" : pathname.startsWith(to);
+}
+
+function NavLink({ to, label }) {
+  const isActive = useIsActiveRoute(to);
   return (
     <Link
       to={to}
-      onClick={onClick}
-      className={`nav-link interactive-focus relative ${className}`}
+      className="nav-link interactive-focus relative"
       aria-current={isActive ? "page" : undefined}
     >
       <span className="relative z-10">{label}</span>
       {isActive && (
-        <motion.span
+        <m.span
           layoutId="nav-active-pill"
           className="absolute inset-0 rounded-full bg-[var(--surface-strong)] border border-[var(--border-strong)]"
           transition={{ type: "spring", stiffness: 500, damping: 35 }}
@@ -384,14 +366,35 @@ function NavLink({ to, label, onClick, className = "" }) {
   );
 }
 
+function MobileNavLink({ to, label }) {
+  const isActive = useIsActiveRoute(to);
+  return (
+    <Link
+      to={to}
+      className="nav-link nav-link-mobile interactive-focus text-base py-3"
+      aria-current={isActive ? "page" : undefined}
+    >
+      {label}
+    </Link>
+  );
+}
+
 function SiteHeader({ theme, onToggleTheme }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const menuButtonRef = useRef(null);
+  const { pathname } = useLocation();
+
+  // Dismissing the menu (Escape, backdrop) returns focus to the button that opened it.
   const closeMenu = () => {
     setMenuOpen(false);
     menuButtonRef.current?.focus();
   };
+
+  // Any navigation — a menu link, the logo, or browser back/forward — closes the menu.
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -422,7 +425,6 @@ function SiteHeader({ theme, onToggleTheme }) {
           <div className="flex flex-col justify-center min-w-0">
             <Link
               to="/"
-              onClick={closeMenu}
               className="font-display text-base sm:text-lg tracking-[-0.03em] text-[var(--text-strong)] hover:text-[var(--accent-lilac)] transition-colors duration-150 shrink-0 interactive-focus rounded-sm leading-tight"
             >
               {profile.name}
@@ -441,7 +443,7 @@ function SiteHeader({ theme, onToggleTheme }) {
               {navItems.map(item => <NavLink key={item.to} {...item} />)}
             </nav>
             <ThemeToggle theme={theme} onToggleTheme={onToggleTheme} />
-            <motion.button
+            <m.button
               ref={menuButtonRef}
               type="button"
               className="sm:hidden inline-flex items-center justify-center border border-[var(--border)] rounded-full bg-[var(--surface)] text-[var(--text-strong)] w-[2.8rem] h-[2.8rem] cursor-pointer ml-1 transition-colors duration-150 hover:border-[var(--border-strong)] hover:bg-[var(--surface-strong)] interactive-focus"
@@ -455,7 +457,7 @@ function SiteHeader({ theme, onToggleTheme }) {
                 ? <HiOutlineXMark className="h-[18px] w-[18px]" aria-hidden="true" />
                 : <HiOutlineBars3 className="h-[18px] w-[18px]" aria-hidden="true" />
               }
-            </motion.button>
+            </m.button>
           </div>
         </div>
       </header>
@@ -465,7 +467,7 @@ function SiteHeader({ theme, onToggleTheme }) {
         {menuOpen && (
           <>
             {/* Backdrop */}
-            <motion.div
+            <m.div
               className="fixed inset-0 z-40 sm:hidden"
               onClick={closeMenu}
               aria-hidden="true"
@@ -475,7 +477,7 @@ function SiteHeader({ theme, onToggleTheme }) {
               transition={{ duration: 0.2 }}
             />
             {/* Menu panel */}
-            <motion.div
+            <m.div
               id="mobile-menu"
               className="fixed top-[60px] inset-x-0 z-40 sm:hidden border-b border-[var(--border)] overflow-hidden"
               style={navBg}
@@ -485,16 +487,7 @@ function SiteHeader({ theme, onToggleTheme }) {
               transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
             >
               <nav aria-label="Mobile" className="mx-auto max-w-3xl px-5 py-3 flex flex-col">
-                {navItems.map(item => (
-                  <Link
-                    key={item.to}
-                    to={item.to}
-                    className="nav-link interactive-focus text-base py-3"
-                    onClick={closeMenu}
-                  >
-                    {item.label}
-                  </Link>
-                ))}
+                {navItems.map(item => <MobileNavLink key={item.to} {...item} />)}
               </nav>
               <div className="mx-auto max-w-3xl px-5 pb-4 flex flex-wrap gap-2 border-t border-[var(--border)] pt-3">
                 {navSocialIds.map(id => {
@@ -502,7 +495,7 @@ function SiteHeader({ theme, onToggleTheme }) {
                   return s ? <SocialIconLink key={id} id={id} label={s.label} url={s.url} small /> : null;
                 })}
               </div>
-            </motion.div>
+            </m.div>
           </>
         )}
       </AnimatePresence>
@@ -514,7 +507,7 @@ function SiteHeader({ theme, onToggleTheme }) {
 
 function PostCard({ post }) {
   return (
-    <motion.div
+    <m.div
       whileHover={{ y: -5 }}
       transition={{ type: "spring", stiffness: 350, damping: 24 }}
     >
@@ -542,32 +535,73 @@ function PostCard({ post }) {
           />
         </span>
       </Link>
-    </motion.div>
+    </m.div>
+  );
+}
+
+// Shows the video thumbnail and only loads YouTube's player (several hundred kB
+// of third-party script) once the visitor asks for it.
+function YouTubeEmbed({ videoId, start, title, playing, onPlay }) {
+  const iframeRef = useRef(null);
+
+  useEffect(() => {
+    if (playing) iframeRef.current?.focus();
+  }, [playing]);
+
+  if (playing) {
+    const params = new URLSearchParams({ autoplay: "1", rel: "0" });
+    if (start) params.set("start", String(start));
+    return (
+      <iframe
+        ref={iframeRef}
+        src={`https://www.youtube-nocookie.com/embed/${videoId}?${params}`}
+        title={title}
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+        className="absolute inset-0 w-full h-full border-0"
+      />
+    );
+  }
+
+  return (
+    <button type="button" className="video-facade" onClick={onPlay} aria-label={`Play video: ${title}`}>
+      <img
+        src={`https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`}
+        alt=""
+        loading="lazy"
+        decoding="async"
+        className="absolute inset-0 h-full w-full object-cover opacity-90"
+      />
+      <span className="video-facade-play" aria-hidden="true">
+        <HiPlay className="h-7 w-7 translate-x-[2px]" />
+      </span>
+    </button>
   );
 }
 
 function TalkCard({ talk }) {
+  const [videoPlaying, setVideoPlaying] = useState(false);
   const hasEmbed = talk.youtube || talk.speakerDeckId;
-  const youtubeEmbedSrc = talk.youtube
-    ? `https://www.youtube.com/embed/${talk.youtube}${talk.youtubeStart ? `?start=${talk.youtubeStart}` : ""}`
-    : null;
   const youtubeWatchHref = talk.youtube
     ? `https://www.youtube.com/watch?v=${talk.youtube}${talk.youtubeStart ? `&t=${talk.youtubeStart}` : ""}`
     : null;
+  // Pointer events stop at an iframe's edge, so a lifted card would drop the moment the
+  // cursor moved onto a live embed. Only lift while no iframe is on the card.
+  const hasLiveIframe = videoPlaying || (!talk.youtube && talk.speakerDeckId);
   return (
-    <motion.article
+    <m.article
       className="surface-card content-card rounded-[24px] overflow-hidden"
-      whileHover={{ y: -5 }}
+      whileHover={hasLiveIframe ? undefined : { y: -5 }}
       transition={{ type: "spring", stiffness: 350, damping: 24 }}
     >
-      {youtubeEmbedSrc ? (
+      {talk.youtube ? (
         <div className="relative w-full bg-black" style={{ paddingBottom: "56.25%" }}>
-          <iframe
-            src={youtubeEmbedSrc}
+          <YouTubeEmbed
+            videoId={talk.youtube}
+            start={talk.youtubeStart}
             title={talk.title}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-            className="absolute inset-0 w-full h-full border-0"
+            playing={videoPlaying}
+            onPlay={() => setVideoPlaying(true)}
           />
         </div>
       ) : talk.speakerDeckId ? (
@@ -577,6 +611,7 @@ function TalkCard({ talk }) {
             title={talk.title}
             allow="fullscreen"
             allowFullScreen
+            loading="lazy"
             className="absolute inset-0 w-full h-full border-0"
             style={{ background: "var(--surface-alt)" }}
           />
@@ -632,7 +667,7 @@ function TalkCard({ talk }) {
           )}
         </div>
       </div>
-    </motion.article>
+    </m.article>
   );
 }
 
@@ -661,36 +696,33 @@ function HomePage() {
   const posts = sortedPosts(blogData.posts);
   const talkList = sortedTalks(talks);
   const PREVIEW = 3;
+  usePageMeta(pageMeta["/"]);
 
   return (
       <main id="main-content" className="relative mx-auto max-w-3xl px-5 sm:px-8 pb-20">
         <AmbientOrbs />
 
         {/* Hero */}
-        <motion.header
+        <m.header
           className="relative pt-14 sm:pt-20 pb-16 sm:pb-20"
           initial="hidden"
           animate="show"
           variants={{ hidden: {}, show: { transition: { staggerChildren: 0.09 } } }}
         >
-          <motion.p
-            variants={fadeUp}
-            className="section-kicker mb-4"
-            style={{ color: "var(--accent-rose)" }}
-          >
+          <m.p variants={fadeUp} className="section-kicker section-kicker-rose mb-4">
             {profile.role} · {profile.location}
-          </motion.p>
-          <motion.h1
+          </m.p>
+          <m.h1
             variants={fadeUp}
             className="font-display leading-[0.95] tracking-[-0.045em] text-[var(--text-strong)]"
             style={{ fontSize: "clamp(2.8rem, 12vw, 4.75rem)" }}
           >
             <span className="text-[var(--accent-lilac)]">Mani</span> Ramezan
-          </motion.h1>
-          <motion.p variants={fadeUp} className="mt-4 max-w-xl text-base sm:text-lg leading-8 text-[var(--text-muted)]">
+          </m.h1>
+          <m.p variants={fadeUp} className="mt-4 max-w-xl text-base sm:text-lg leading-8 text-[var(--text-muted)]">
             {profile.shortBio}
-          </motion.p>
-          <motion.div variants={fadeUp} className="mt-8 flex flex-wrap items-center gap-3">
+          </m.p>
+          <m.div variants={fadeUp} className="mt-8 flex flex-wrap items-center gap-3">
             <Link to="/blogs" className="hero-cta hero-cta-primary interactive-focus">
               Read my writing
               <HiOutlineArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -705,17 +737,17 @@ function HomePage() {
               <HiOutlineEnvelope className="h-4 w-4" aria-hidden="true" />
               Get in touch
             </a>
-          </motion.div>
-        </motion.header>
+          </m.div>
+        </m.header>
 
         {/* About */}
-        <Reveal as={motion.section} id="about" className="section-anchor pb-14" y={16}>
-          <h2 className="section-kicker" style={{ color: "var(--accent-rose)" }}>About</h2>
+        <Reveal as={m.section} id="about" className="section-anchor pb-14" y={16}>
+          <h2 className="section-kicker section-kicker-rose">About</h2>
           <div className="mt-5 space-y-4 max-w-2xl">
             <p className="text-base leading-8 text-[var(--text-muted)]">
-              Independent iOS engineer and founder of Arjang Consulting, with 12+ years building iOS
-              products, including staff-level roles at LinkedIn and Amazon. I focus on architecture,
-              testing, and developer experience.
+              Staff-level iOS engineer with 12+ years building mobile products at companies
+              including LinkedIn and Amazon, and now leading a mobile team at Capital One. I focus on
+              architecture, developer tooling, test automation, and AI-assisted development.
             </p>
             <p className="text-base leading-8 text-[var(--text-muted)]">
               Outside of work I write about engineering patterns I&apos;ve found genuinely useful —
@@ -724,8 +756,8 @@ function HomePage() {
             </p>
           </div>
           <div className="mt-6 flex flex-wrap gap-2">
-            {[["sage","Swift"],["sage","iOS"],["lilac","Architecture"],["sage","Testing"],["rose","CI/CD"]].map(([color, label]) => (
-              <Tag key={label} label={label} color={color} />
+            {["Swift", "iOS", "Architecture", "Testing", "CI/CD"].map(label => (
+              <Tag key={label} label={label} color={topicColor(label)} />
             ))}
           </div>
           {/* Social icons — shown here on mobile since nav hides them */}
@@ -760,7 +792,7 @@ function HomePage() {
         {/* Talks preview */}
         <section id="talks" className="section-anchor pb-14">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="section-kicker" style={{ color: "var(--accent-lilac)" }}>Talks</h2>
+            <h2 className="section-kicker section-kicker-lilac">Talks</h2>
             <Link to="/talks" className="interactive-focus text-sm font-bold text-[var(--text-muted)] hover:text-[var(--link)] transition-colors duration-150 rounded-sm">
               View all →
             </Link>
@@ -781,6 +813,7 @@ function HomePage() {
 
 function BlogsListPage() {
   const posts = sortedPosts(blogData.posts);
+  usePageMeta(pageMeta["/blogs"]);
   return (
       <main id="main-content" className="mx-auto max-w-3xl px-5 sm:px-8 pb-20">
         <header className="pt-12 sm:pt-16 pb-10">
@@ -804,10 +837,11 @@ function BlogsListPage() {
 
 function TalksListPage() {
   const talkList = sortedTalks(talks);
+  usePageMeta(pageMeta["/talks"]);
   return (
       <main id="main-content" className="mx-auto max-w-3xl px-5 sm:px-8 pb-20">
         <header className="pt-12 sm:pt-16 pb-10">
-          <p className="section-kicker" style={{ color: "var(--accent-lilac)" }}>Speaking</p>
+          <p className="section-kicker section-kicker-lilac">Speaking</p>
           <h1 className="mt-4 font-display text-4xl sm:text-5xl leading-tight text-[var(--text-strong)]">
             All talks
           </h1>
@@ -827,10 +861,11 @@ function TalksListPage() {
 
 function ResumePage() {
   const [showAllOpenSource, setShowAllOpenSource] = useState(false);
-  const visibleOpenSourceProjects = showAllOpenSource
-    ? openSourceProjects
-    : openSourceProjects.slice(0, 4);
-  const hiddenOpenSourceCount = openSourceProjects.length - visibleOpenSourceProjects.length;
+  const openSourceProjectCount = openSourceGroups.reduce(
+    (total, group) => total + group.projects.length,
+    0
+  );
+  usePageMeta(pageMeta["/resume"]);
 
   return (
       <main id="main-content" className="mx-auto max-w-3xl px-5 sm:px-8 pb-20">
@@ -845,7 +880,7 @@ function ResumePage() {
         </header>
 
         {/* Experience */}
-        <Reveal as={motion.section} className="py-10 border-b border-[var(--border)]" y={16}>
+        <Reveal as={m.section} className="py-10 border-b border-[var(--border)]" y={16}>
           <h2 className="section-kicker mb-6">Experience</h2>
           {resumeExperience.map((job, i) => (
             <div
@@ -885,19 +920,36 @@ function ResumePage() {
         </Reveal>
 
         {/* Community */}
-        <Reveal as={motion.section} className="py-10 border-b border-[var(--border)]" y={16}>
-          <h2 className="section-kicker mb-6" style={{ color: "var(--accent-rose)" }}>Community</h2>
+        <Reveal as={m.section} className="py-10 border-b border-[var(--border)]" y={16}>
+          <h2 className="section-kicker section-kicker-rose mb-6">Community</h2>
           <div className="space-y-6">
             <div>
               <div className="flex flex-wrap items-baseline gap-x-2">
                 <p className="font-display text-lg text-[var(--text-strong)]">Kodeco</p>
-                <span className="text-sm text-[var(--text-soft)]">Feb 2020 – Feb 2026</span>
+                <span className="text-sm text-[var(--text-soft)]">Feb 2020 – Present</span>
               </div>
               <ul className="mt-2 space-y-1">
                 {[
-                  "Tech editor on multiple published tutorials.",
-                  "Discord moderator helping with overall questions and Apple-specific topics.",
-                  "Mentoring and running bootcamps on Becoming iOS Developer and Introduction to Apple Intelligence."
+                  "Technical and article editor for iOS and AI tutorials and educational content.",
+                  "Discord moderator, supporting the developer community on Apple-platform topics.",
+                  "Bootcamp moderator for Becoming an iOS Developer and Introduction to Apple Intelligence."
+                ].map((note, i) => (
+                  <li key={i} className="flex gap-2 text-base leading-7 text-[var(--text-muted)]">
+                    <span className="shrink-0 text-[var(--text-soft)] select-none">–</span>
+                    <span>{note}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <div className="flex flex-wrap items-baseline gap-x-2">
+                <p className="font-display text-lg text-[var(--text-strong)]">RightOn Education</p>
+                <span className="text-sm text-[var(--text-soft)]">Feb 2020 – Present</span>
+              </div>
+              <ul className="mt-2 space-y-1">
+                {[
+                  "Converted an existing proof of concept into a React Native MVP and designed its backend architecture on AWS.",
+                  "Mentor the lead engineer on product and technical architecture, including web, backend, and agentic AI systems."
                 ].map((note, i) => (
                   <li key={i} className="flex gap-2 text-base leading-7 text-[var(--text-muted)]">
                     <span className="shrink-0 text-[var(--text-soft)] select-none">–</span>
@@ -937,45 +989,65 @@ function ResumePage() {
                   aria-expanded={showAllOpenSource}
                   onClick={() => setShowAllOpenSource(isExpanded => !isExpanded)}
                 >
-                  {showAllOpenSource ? "Show fewer" : `Show all ${openSourceProjects.length}`}
+                  {showAllOpenSource ? "Show fewer" : `Show all ${openSourceProjectCount} repos`}
                 </button>
               </div>
               <ul className="mt-2 space-y-1.5">
-                {visibleOpenSourceProjects.map(project => (
-                  <li key={project.name} className="flex gap-2 text-base leading-7 text-[var(--text-muted)]">
-                    <span className="shrink-0 text-[var(--text-soft)] select-none">–</span>
-                    <span>
-                      <a
-                        href={project.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-link interactive-focus"
-                      >
-                        {project.name}
-                      </a>
-                      {" "}— {project.description}
-                    </span>
+                {openSourceGroups.map(group => (
+                  <li key={group.id}>
+                    <div className="flex gap-2 text-base leading-7 text-[var(--text-muted)]">
+                      <span className="shrink-0 text-[var(--text-soft)] select-none">–</span>
+                      <span>
+                        <a
+                          href={group.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-link interactive-focus"
+                        >
+                          {group.name}
+                        </a>
+                        {" "}— {group.description}
+                      </span>
+                    </div>
+                    {showAllOpenSource ? (
+                      <ul className="mt-1 ml-6 space-y-1">
+                        {group.projects.map(project => (
+                          <li
+                            key={project.name}
+                            className="flex gap-2 text-[0.94rem] leading-7 text-[var(--text-soft)]"
+                          >
+                            <span className="shrink-0 select-none">·</span>
+                            <span>
+                              <a
+                                href={project.url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-link interactive-focus"
+                              >
+                                {project.name}
+                              </a>
+                              {" "}— {project.description}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
                   </li>
                 ))}
               </ul>
-              {!showAllOpenSource && hiddenOpenSourceCount > 0 ? (
-                <p className="mt-2 text-sm text-[var(--text-soft)]">
-                  {hiddenOpenSourceCount} more open-source projects hidden to keep the resume compact.
-                </p>
-              ) : null}
             </div>
             <div>
-              <p className="font-display text-lg text-[var(--text-strong)]">Conference Speaking</p>
+              <p className="font-display text-lg text-[var(--text-strong)]">Conference Speaking &amp; Presentations</p>
               <p className="mt-1 text-base leading-7 text-[var(--text-muted)]">
-                Speaker at iOSoho and Kodeco on modularization, testing, release management, and Apple Intelligence.
+                Presented at iOSoho and Kodeco on iOS architecture, modularization, testing, release automation, and Apple Intelligence.
               </p>
             </div>
           </div>
         </Reveal>
 
         {/* Skills */}
-        <Reveal as={motion.section} className="py-10" y={16}>
-          <h2 className="section-kicker mb-6" style={{ color: "var(--accent-lilac)" }}>Skills</h2>
+        <Reveal as={m.section} className="py-10" y={16}>
+          <h2 className="section-kicker section-kicker-lilac mb-6">Skills</h2>
           <div className="space-y-5">
             {resumeSkillGroups.map(group => (
               <div key={group.label}>
@@ -984,7 +1056,7 @@ function ResumePage() {
                   {group.skills.map(skill => (
                     <span
                       key={skill}
-                      className="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium border border-[var(--border)] text-[var(--text-muted)] bg-[var(--surface)] hover:border-[var(--border-strong)] hover:text-[var(--text-strong)] transition-colors duration-150 cursor-default"
+                      className="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium border border-[var(--border)] text-[var(--text-muted)] bg-[var(--surface)]"
                     >
                       {skill}
                     </span>
@@ -1000,55 +1072,49 @@ function ResumePage() {
   );
 }
 
+// Thin bar under the header that fills as the reader scrolls through a post.
+function ReadingProgress() {
+  const { scrollYProgress } = useScroll();
+  const scaleX = useSpring(scrollYProgress, { stiffness: 220, damping: 32, restDelta: 0.001 });
+  return <m.div className="reading-progress" style={{ scaleX }} aria-hidden="true" />;
+}
+
+const skeletonLineWidths = ["100%", "96%", "98%", "72%", "100%", "94%", "58%"];
+
 function BlogPostPage() {
   const { slug } = useParams();
   const post = blogData.posts.find(entry => entry.slug === slug);
   const [contentHtml, setContentHtml] = useState(null);
+  const [loadFailed, setLoadFailed] = useState(false);
   const contentRef = useRef(null);
+  usePageMeta(post ? postMeta(post) : notFoundMeta);
 
   useEffect(() => {
-    if (post) {
-      document.title = `${post.title} | ${profile.name}`;
-      let metaDesc = document.querySelector('meta[name="description"]');
-      if (!metaDesc) {
-        metaDesc = document.createElement("meta");
-        metaDesc.name = "description";
-        document.head.appendChild(metaDesc);
-      }
-      metaDesc.setAttribute("content", post.excerpt);
-    } else {
-      document.title = "Post Not Found";
-    }
-    return () => { document.title = profile.name; };
-  }, [post]);
-
-  useEffect(() => {
+    if (!post) return;
+    let active = true;
     async function loadContent() {
-      if (!post) return;
+      const loader = getContentLoader(post);
+      if (!loader) throw new Error(`No bundled content for ${post.contentFile}`);
       if (post.contentType === "html") {
-        const loader = getHtmlModule(post.contentFile);
-        if (loader) {
-          const raw = await loader();
-          const accessibleHtml = raw
-            .replace(/<h[2-6]/g, "<h2")
-            .replace(/<\/h[2-6]>/g, "</h2>")
-            .replace(/<pre>/g, '<pre tabindex="0">')
-            .replace(/<pre /g, '<pre tabindex="0" ');
-          setContentHtml(accessibleHtml);
-        }
+        const raw = await loader();
+        // Medium emits its own heading levels; flatten them to keep one h1 on the page.
+        const accessibleHtml = raw
+          .replace(/<h[2-6]/g, "<h2")
+          .replace(/<\/h[2-6]>/g, "</h2>");
+        if (active) setContentHtml(withPreTabIndex(accessibleHtml));
       } else {
-        const loader = getMarkdownModule(post.contentFile);
-        if (loader) {
-          const raw = await loader();
-          const accessibleHtml = marked.parse(raw)
-            .replace(/<pre>/g, '<pre tabindex="0">')
-            .replace(/<pre /g, '<pre tabindex="0" ');
-          setContentHtml(accessibleHtml);
-        }
+        const [{ renderMarkdown }, raw] = await Promise.all([loadMarkdownModule(), loader()]);
+        if (active) setContentHtml(withPreTabIndex(renderMarkdown(raw)));
       }
     }
-    loadContent();
-  }, [slug, post]);
+    // A failed chunk load usually means a deploy replaced the old assets; a reload fixes it.
+    loadContent().catch(() => {
+      if (active) setLoadFailed(true);
+    });
+    return () => {
+      active = false;
+    };
+  }, [post]);
 
   useEffect(() => {
     const root = contentRef.current;
@@ -1060,9 +1126,9 @@ function BlogPostPage() {
     for (const block of codeBlocks) {
       if (block.dataset.copyReady === "true") continue;
 
-      const code = block.querySelector("code");
-      if (!code) continue;
-
+      // Medium posts use bare <pre> blocks; markdown wraps code in <pre><code>.
+      // Read the text before the button is appended so "Copy" isn't copied with it.
+      const codeText = (block.querySelector("code") ?? block).innerText;
       block.dataset.copyReady = "true";
 
       const button = document.createElement("button");
@@ -1080,7 +1146,7 @@ function BlogPostPage() {
 
       const handleClick = async () => {
         try {
-          await navigator.clipboard.writeText(code.innerText);
+          await navigator.clipboard.writeText(codeText);
           button.textContent = "Copied";
           resetLabel();
         } catch {
@@ -1105,26 +1171,21 @@ function BlogPostPage() {
     };
   }, [contentHtml]);
 
-  if (!post || contentHtml === null) {
+  if (!post) {
     return (
         <main id="main-content" className="mx-auto max-w-[660px] px-5 sm:px-8 pb-16 pt-12">
-          {post ? (
-            <p className="text-base leading-8 text-[var(--text-muted)]">Loading…</p>
-          ) : (
-            <>
-              <p className="section-kicker">Writing</p>
-              <h1 className="mt-4 font-display text-5xl leading-tight">Post not found</h1>
-              <p className="mt-4 text-base leading-8 text-[var(--text-muted)]">
-                The requested article is missing or the slug no longer matches the generated content.
-              </p>
-            </>
-          )}
+          <p className="section-kicker">Writing</p>
+          <h1 className="mt-4 font-display text-5xl leading-tight">Post not found</h1>
+          <p className="mt-4 text-base leading-8 text-[var(--text-muted)]">
+            The requested article is missing or the slug no longer matches the generated content.
+          </p>
         </main>
     );
   }
 
   return (
       <main id="main-content" className="mx-auto max-w-[660px] px-5 sm:px-8 pb-20">
+        <ReadingProgress />
         <article>
           {/* Post header */}
           <header className="pt-12 sm:pt-14 pb-12 border-b border-[var(--border)]">
@@ -1150,11 +1211,28 @@ function BlogPostPage() {
           </header>
 
           {/* Prose content */}
-          <div
-            ref={contentRef}
-            className="blog-content mt-12 pb-20"
-            dangerouslySetInnerHTML={{ __html: contentHtml }}
-          />
+          {contentHtml !== null ? (
+            <div
+              ref={contentRef}
+              className="blog-content mt-12 pb-20"
+              dangerouslySetInnerHTML={{ __html: contentHtml }}
+            />
+          ) : loadFailed ? (
+            <p className="mt-12 pb-20 text-base leading-8 text-[var(--text-muted)]">
+              This post couldn&apos;t be loaded.{" "}
+              <a href={`/blog/${post.slug}`} className="inline-link interactive-focus">
+                Reload the page
+              </a>{" "}
+              to try again.
+            </p>
+          ) : (
+            <div className="mt-12 pb-20 flex flex-col gap-4" aria-busy="true">
+              <span className="sr-only">Loading post…</span>
+              {skeletonLineWidths.map((width, i) => (
+                <div key={i} className="skeleton h-4" style={{ width }} aria-hidden="true" />
+              ))}
+            </div>
+          )}
         </article>
 
         {/* Post footer */}
@@ -1174,6 +1252,7 @@ function BlogPostPage() {
 }
 
 function NotFoundPage() {
+  usePageMeta(notFoundMeta);
   return (
       <main id="main-content" className="mx-auto max-w-3xl px-5 sm:px-8 pb-16 pt-12">
         <div className="surface-card rounded-[28px] p-8 sm:p-10">
@@ -1192,10 +1271,45 @@ function NotFoundPage() {
 
 /* ── Analytics ──────────────────────────────────────────────────── */
 
+// posthog-js is ~90 kB gzipped, so it is only fetched when a key is configured
+// and stays out of the initial bundle otherwise.
+const posthogKey = import.meta.env.VITE_POSTHOG_KEY;
+let posthogReady = null;
+function loadPosthog() {
+  if (!posthogKey) return Promise.resolve(null);
+  if (!posthogReady) {
+    posthogReady = import("posthog-js").then(({ default: posthog }) => {
+      posthog.init(posthogKey, {
+        api_host: "https://us.i.posthog.com",
+        // Only capture explicit pageview events — no clicks, forms, or inputs
+        autocapture: false,
+        capture_pageview: false,
+        // No session recordings or heatmaps
+        disable_session_recording: true,
+        disable_heatmaps: true,
+        // Store nothing in cookies or localStorage — memory only
+        persistence: "memory",
+        // Honour the browser's Do Not Track setting
+        respect_dnt: true
+      });
+      return posthog;
+    });
+  }
+  return posthogReady;
+}
+
 function PageTracker() {
   const location = useLocation();
   useEffect(() => {
-    posthog.capture("$pageview", { $current_url: window.location.href });
+    let active = true;
+    loadPosthog().then(posthog => {
+      if (active && posthog) {
+        posthog.capture("$pageview", { $current_url: window.location.href });
+      }
+    });
+    return () => {
+      active = false;
+    };
   }, [location.pathname]);
   return null;
 }
@@ -1205,14 +1319,14 @@ function PageTracker() {
 // Fades/slides the page content on route change; exit is driven by AnimatePresence in AnimatedRoutes.
 function PageTransition({ children }) {
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10 }}
       transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
     >
       {children}
-    </motion.div>
+    </m.div>
   );
 }
 
@@ -1230,8 +1344,9 @@ function Layout({ theme, onToggleTheme, children }) {
 
 function AnimatedRoutes() {
   const location = useLocation();
+  // Reset scroll once the old page has exited, so the new page never opens mid-scroll.
   return (
-    <AnimatePresence mode="wait" initial={false}>
+    <AnimatePresence mode="wait" initial={false} onExitComplete={() => window.scrollTo({ top: 0, behavior: "instant" })}>
       <Routes location={location} key={location.pathname}>
         <Route path="/" element={<PageTransition><HomePage /></PageTransition>} />
         <Route path="/blogs" element={<PageTransition><BlogsListPage /></PageTransition>} />
@@ -1246,26 +1361,63 @@ function AnimatedRoutes() {
 
 export default function App() {
   const [theme, setTheme] = useState(getInitialTheme);
-  const toggleTheme = () => setTheme(t => (t === "dark" ? "light" : "dark"));
 
   useEffect(() => {
-    document.documentElement.dataset.theme = theme;
-    document.documentElement.style.colorScheme = theme;
-    window.localStorage.setItem(themeStorageKey, theme);
-    const themeColorMeta = document.querySelector('meta[name="theme-color"]');
-    if (themeColorMeta) {
-      themeColorMeta.setAttribute("content", theme === "dark" ? "#181a1f" : "#f6f1ec");
-    }
+    applyTheme(theme);
   }, [theme]);
 
+  // Follow the OS setting until the visitor picks a theme explicitly.
+  useEffect(() => {
+    const query = window.matchMedia("(prefers-color-scheme: dark)");
+    const onChange = event => {
+      if (!readSavedTheme()) setTheme(event.matches ? "dark" : "light");
+    };
+    query.addEventListener("change", onChange);
+    return () => query.removeEventListener("change", onChange);
+  }, []);
+
+  // Reveals the new theme as a circle growing out of the toggle button, using the
+  // View Transitions API where available; otherwise the theme just switches.
+  const toggleTheme = event => {
+    const nextTheme = theme === "dark" ? "light" : "dark";
+    saveTheme(nextTheme);
+    const commit = () => {
+      flushSync(() => setTheme(nextTheme));
+      applyTheme(nextTheme);
+    };
+
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!document.startViewTransition || reduceMotion) {
+      commit();
+      return;
+    }
+
+    const rect = event.currentTarget.getBoundingClientRect();
+    const x = rect.left + rect.width / 2;
+    const y = rect.top + rect.height / 2;
+    const radius = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y));
+    document.startViewTransition(commit).ready
+      .then(() => {
+        document.documentElement.animate(
+          { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`] },
+          { duration: 500, easing: "cubic-bezier(0.16, 1, 0.3, 1)", pseudoElement: "::view-transition-new(root)" }
+        );
+      })
+      .catch(() => {
+        // The browser skipped the transition; the theme has still been applied.
+      });
+  };
+
   return (
-    <MotionConfig reducedMotion="user">
-      <BrowserRouter>
-        <PageTracker />
-        <Layout theme={theme} onToggleTheme={toggleTheme}>
-          <AnimatedRoutes />
-        </Layout>
-      </BrowserRouter>
-    </MotionConfig>
+    <LazyMotion features={loadMotionFeatures} strict>
+      <MotionConfig reducedMotion="user">
+        <BrowserRouter>
+          <PageTracker />
+          <Layout theme={theme} onToggleTheme={toggleTheme}>
+            <AnimatedRoutes />
+          </Layout>
+        </BrowserRouter>
+      </MotionConfig>
+    </LazyMotion>
   );
 }

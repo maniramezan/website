@@ -1,22 +1,18 @@
 export const profile = {
   name: "Mani Ramezan",
-  subtitle: "iOS engineer · testing, architecture, automation",
   role: "Founder, Arjang Consulting",
   location: "Brooklyn, NY",
   email: "mani@arjangconsulting.com",
-  summary:
-    "Independent iOS engineer and founder with 12+ years building iOS products, including staff-level roles at LinkedIn and Amazon.",
   shortBio:
-    "I build iOS tooling and developer-experience products through Arjang Consulting, drawing on 12+ years of staff-level iOS work. My focus is modular architecture, rigorous testing strategies, and smoothing out day-to-day developer workflows.",
+    "Founder of Arjang Consulting and tech lead for a mobile team at Capital One. I spend my time on mobile architecture, developer tooling, test automation, and making AI-assisted development actually pay off on a real team.",
   links: {
-    linkedin: "https://www.linkedin.com/in/maniramezan/",
+    linkedin: "https://www.linkedin.com/in/maniramezan",
     github: "https://github.com/maniramezan",
     speakerDeck: "https://speakerdeck.com/maniramezan",
     twitter: "https://x.com/maniramezan",
     bluesky: "https://bsky.app/profile/maniramezan.bsky.social",
     mastodon: "https://mastodon.social/@maanmaan",
-    medium: "http://medium.com/@maniramezan",
-    blogsRepo: "https://github.com/maniramezan/blogs"
+    medium: "http://medium.com/@maniramezan"
   }
 };
 
@@ -111,118 +107,120 @@ export const talks = [
   }
 ];
 
-export const openSourceProjects = [
+// Grouped by organization so the resume stays scannable: each group carries a
+// one-line summary, and expanding the section reveals the individual repositories.
+export const openSourceGroups = [
   {
+    id: "shipitswifty",
     name: "ShipItSwifty",
+    url: "https://github.com/ShipItSwifty",
     description:
-      "Swift-native CLI and library for iOS and Android app release automation. Automates the build → archive → distribute pipeline from a single declarative Shipfile.yml, with first-class support for App Store Connect, Google Play, code signing, metadata, and AI-assisted setup.",
-    language: "Swift",
-    stars: null,
-    url: "https://shipitswifty.tools"
+      "Swift-native release automation for iOS and Android. A single declarative Shipfile drives the build → archive → distribute pipeline, and dedicated MCP servers put App Store Connect, Xcode Cloud, and Google Play release state in reach of AI agents.",
+    projects: [
+      {
+        name: "shipitswifty",
+        description:
+          "The CLI and library behind the pipeline, covering code signing, metadata, and App Store Connect / Google Play submission.",
+        url: "https://github.com/ShipItSwifty/shipitswifty"
+      },
+      {
+        name: "app-store-connect-mcp",
+        description:
+          "App Store Connect and Xcode Cloud Swift client, plus an MCP server for investigating CI failures with AI agents.",
+        url: "https://github.com/ShipItSwifty/app-store-connect-mcp"
+      },
+      {
+        name: "google-play-store-mcp",
+        description:
+          "Swift clients for Google service-account auth and the Play Developer API, plus an MCP server exposing Play release state to AI agents.",
+        url: "https://github.com/ShipItSwifty/google-play-store-mcp"
+      }
+    ]
   },
   {
-    name: "app-store-connect-mcp",
+    id: "arjang",
+    name: "Arjang Consulting",
+    url: "https://github.com/ArjangConsulting",
     description:
-      "App Store Connect + Xcode Cloud Swift client and MCP server, extracted from ShipItSwifty, for investigating CI failures with AI agents.",
-    language: "Swift",
-    stars: null,
-    url: "https://github.com/ShipItSwifty/app-store-connect-mcp"
+      "Test and mock infrastructure for native mobile, built to be driven as comfortably by AI agents as by hand.",
+    projects: [
+      {
+        name: "amoo-ai",
+        description:
+          "Drives iOS and Android devices and simulators to author and run automated tests, including an MCP server for AI agents.",
+        url: "https://github.com/ArjangConsulting/amoo-ai"
+      },
+      {
+        name: "amoo-studio",
+        description: "Kotlin Multiplatform desktop GUI for the amoo tooling.",
+        url: "https://github.com/ArjangConsulting/amoo-studio"
+      },
+      {
+        name: "moqserver",
+        description:
+          "Mock server generator with a Swift Vapor backend and a desktop app to customize API responses.",
+        url: "https://github.com/ArjangConsulting/moqserver"
+      }
+    ]
   },
   {
-    name: "google-play-store-mcp",
+    id: "personal",
+    name: "Personal libraries",
+    url: "https://github.com/maniramezan",
     description:
-      "Swift clients for Google service-account auth and the Google Play Developer API, extracted from ShipItSwifty, plus an MCP server exposing Play release state to AI agents.",
-    language: "Swift",
-    stars: null,
-    url: "https://github.com/ShipItSwifty/google-play-store-mcp"
-  },
-  {
-    name: "amoo-ai",
-    description:
-      "Tooling to interact with iOS and Android devices and simulators to author and run automated tests, including an MCP server for AI agents.",
-    language: "Swift",
-    stars: null,
-    url: "https://github.com/arjangconsulting/amoo-ai"
-  },
-  {
-    name: "moqserver",
-    description:
-      "Mock server generator with a Swift Vapor backend and a desktop app to customize API responses.",
-    language: "Kotlin",
-    stars: null,
-    url: "https://github.com/arjangconsulting/moqserver"
-  },
-  {
-    name: "SwiftyShell",
-    description:
-      "Type-safe shell support for Swift. Models shell tools, subcommands, flags, pipelines, and workflows as Swift values — compiler-enforced, testable via MockExecutor, with typed wrappers for Git, Grep, Brew, and more.",
-    language: "Swift",
-    stars: null,
-    url: "https://github.com/maniramezan/SwiftyShell"
-  },
-  {
-    name: "SwiftyChain",
-    description:
-      "Swift 6 keychain wrapper for Apple platforms. Provides a typed Keychain actor for async-safe access and an @KeychainStorage property wrapper for simple optional values.",
-    language: "Swift",
-    stars: null,
-    url: "https://github.com/maniramezan/SwiftyChain"
-  },
-  {
-    name: "SwiftyNetwork",
-    description:
-      "Modern Swift networking library with async/await, built-in caching, authentication, and type-safe endpoints.",
-    language: "Swift",
-    stars: null,
-    url: "https://github.com/maniramezan/SwiftyNetwork"
-  },
-  {
-    name: "SwiftUIComponents",
-    description:
-      "Reusable custom components for SwiftUI apps.",
-    language: "Swift",
-    stars: null,
-    url: "https://github.com/maniramezan/SwiftUIComponents"
-  },
-  {
-    name: "SwiftCommons",
-    description:
-      "Shared Swift utilities and helpers for reusable app code.",
-    language: "Swift",
-    stars: null,
-    url: "https://github.com/maniramezan/SwiftCommons"
-  },
-  {
-    name: "ComposeUIComponents",
-    description:
-      "Reusable UI components for Kotlin and Android Compose projects.",
-    language: "Kotlin",
-    stars: null,
-    url: "https://github.com/maniramezan/ComposeUIComponents"
-  },
-  {
-    name: "kenwork",
-    description:
-      "Android networking library with caching and authentication support.",
-    language: "Kotlin",
-    stars: null,
-    url: "https://github.com/maniramezan/kenwork"
-  },
-  {
-    name: "kommon",
-    description:
-      "Kotlin-first library of helper methods focused on Android features and shared utilities.",
-    language: "Kotlin",
-    stars: null,
-    url: "https://github.com/maniramezan/kommon"
-  },
-  {
-    name: "UserDefaultMacro",
-    description:
-      "Swift macros that reduce boilerplate when working with UserDefaults-backed storage.",
-    language: "Swift",
-    stars: 5,
-    url: "https://github.com/maniramezan/UserDefaultMacro"
+      "Swift and Kotlin libraries I maintain and lean on in my own work — shell scripting, keychain, networking, and shared UI components.",
+    projects: [
+      {
+        name: "SwiftyShell",
+        description:
+          "Type-safe shell support for Swift. Models tools, subcommands, flags, pipelines, and workflows as Swift values — compiler-enforced and testable via MockExecutor, with typed wrappers for Git, Grep, Brew, and more.",
+        url: "https://github.com/maniramezan/SwiftyShell"
+      },
+      {
+        name: "SwiftyChain",
+        description:
+          "Swift 6 keychain wrapper for Apple platforms. A typed Keychain actor for async-safe access and an @KeychainStorage property wrapper for simple optional values.",
+        url: "https://github.com/maniramezan/SwiftyChain"
+      },
+      {
+        name: "SwiftyNetwork",
+        description:
+          "Modern Swift networking library with async/await, built-in caching, authentication, and type-safe endpoints.",
+        url: "https://github.com/maniramezan/SwiftyNetwork"
+      },
+      {
+        name: "SwiftUIComponents",
+        description: "Reusable custom components for SwiftUI apps.",
+        url: "https://github.com/maniramezan/SwiftUIComponents"
+      },
+      {
+        name: "SwiftCommons",
+        description: "Shared Swift utilities and helpers for reusable app code.",
+        url: "https://github.com/maniramezan/SwiftCommons"
+      },
+      {
+        name: "UserDefaultMacro",
+        description:
+          "Swift macros that reduce boilerplate when working with UserDefaults-backed storage.",
+        url: "https://github.com/maniramezan/UserDefaultMacro"
+      },
+      {
+        name: "ComposeUIComponents",
+        description: "Reusable UI components for Kotlin and Android Compose projects.",
+        url: "https://github.com/maniramezan/ComposeUIComponents"
+      },
+      {
+        name: "kenwork",
+        description: "Android networking library with caching and authentication support.",
+        url: "https://github.com/maniramezan/kenwork"
+      },
+      {
+        name: "kommon",
+        description:
+          "Kotlin-first library of helper methods focused on Android features and shared utilities.",
+        url: "https://github.com/maniramezan/kommon"
+      }
+    ]
   }
 ];
 
@@ -237,14 +235,27 @@ export const podcasts = [
 
 export const resumeExperience = [
   {
+    title: "Tech Lead",
+    company: "Capital One",
+    companyUrl: "https://www.capitalone.com",
+    period: "Feb 2026 – Present",
+    notes: [
+      "Lead a mobile team of four engineers, collaborating across backend, product, and engineering teams on feature scoping, technical design, and code quality.",
+      "Coordinate and drive AOC Accept across multiple teams, expanding mobile adoption by transitioning customer experiences from web to the native mobile app.",
+      "Reduced flaky tests and manual regression testing by ~90% on iOS and ~85% on Android through improvements to mobile test automation.",
+      "Drive adoption of AI-assisted development across the team through tooling, agentic workflows, and hands-on training."
+    ]
+  },
+  {
     title: "Founder",
-    company: "Arjang Consulting LLC",
+    company: "Arjang Consulting",
     companyUrl: "https://arjang.consulting",
     period: "May 2023 – Present",
     notes: [
-      "Building [amoo-ai](https://github.com/arjangconsulting/amoo-ai), tooling to drive iOS and Android devices and simulators to author and run automated tests, including an MCP server for AI agents.",
-      "Building [moqserver](https://github.com/arjangconsulting/moqserver), a mock server generator with a Swift Vapor backend and a desktop app for customizing API responses.",
-      "Building [ShipItSwifty](https://shipitswifty.tools), Swift-native release tooling automating the build → archive → distribute pipeline for iOS and Android, including dedicated MCP servers for [Google Play](https://github.com/ShipItSwifty/google-play-store-mcp) and [App Store Connect / Xcode Cloud](https://github.com/ShipItSwifty/app-store-connect-mcp) that expose release and CI state to AI agents."
+      "Operate a technical consultancy focused on mobile CI/CD, test automation, developer tooling, and open-source software.",
+      "Develop and maintain [Jot: Habit Tracker & Calendar](https://apps.apple.com/us/app/jot-habit-tracker-calendar/id6779810169), a privacy-focused consumer app with extensive customization.",
+      "Build and maintain open-source developer tooling, including [ShipItSwifty](https://github.com/ShipItSwifty) for mobile release automation, [amoo-ai](https://github.com/arjangconsulting/amoo-ai) for AI-assisted native mobile testing, and [moqserver](https://github.com/arjangconsulting/moqserver) for UI test infrastructure.",
+      "Extend developer tooling with Model Context Protocol (MCP) integrations, enabling AI agents to automate workflows across the [App Store](https://github.com/ShipItSwifty/app-store-connect-mcp) and [Google Play](https://github.com/ShipItSwifty/google-play-store-mcp)."
     ]
   },
   {
@@ -252,10 +263,10 @@ export const resumeExperience = [
     company: "LinkedIn",
     period: "Jun 2021 – Feb 2026",
     notes: [
-      "Led a greenfield full-stack initiative across frontend and backend teams, including gRPC services and adoption-driving prototypes.",
+      "Led a greenfield project across frontend and backend teams, architecting gRPC services and building prototypes to validate the architecture and drive cross-team adoption.",
       "Led a new app deep-linking initiative that unblocked an estimated $24M in revenue.",
-      "Improved developer experience through testing infrastructure improvements, compiler plugins, architectural migrations, and modernizing LayoutTest-iOS APIs.",
-      "Led the Sponsored Messaging mobile team across iOS and Android, mentoring engineers and running iOS workshops."
+      "Improved mobile developer experience through testing infrastructure, compiler tooling, architectural migrations, and modernization of [LayoutTest-iOS](https://github.com/linkedin/LayoutTest-iOS).",
+      "Led the Sponsored Messaging mobile team across iOS and Android, mentoring engineers and conducting iOS workshops for new hires."
     ]
   },
   {
@@ -263,9 +274,10 @@ export const resumeExperience = [
     company: "Comixology (Amazon)",
     period: "Nov 2019 – Jun 2021",
     notes: [
-      "Designed and implemented a Swift framework to migrate legacy code.",
-      "Refactored release automation scripts, reducing release time by 30%.",
-      "Created a troubleshooting guide adopted by 40+ engineers across three teams."
+      "Integrated Comixology features and business logic into the Amazon Kindle codebase, designing a Swift framework to enable a Swift-first approach within the existing Objective-C codebase.",
+      "Refactored release automation, reducing release time by 30%.",
+      "Created a troubleshooting knowledge base adopted by 40+ engineers across three teams.",
+      "Interviewed, onboarded, and mentored engineers."
     ]
   },
   {
@@ -273,47 +285,47 @@ export const resumeExperience = [
     company: "Zocdoc",
     period: "Sep 2017 – Nov 2019",
     notes: [
-      "Led product ideation and delivery of iMessage and Siri integrations.",
-      "Upgraded the dependency manager and modularized code, reducing compile time by 21%.",
-      "Consolidated app targets (4 → 1) and refactored codebase, eliminating ~200 compile-time warnings."
+      "Led product ideation and implementation of iMessage and Siri integrations.",
+      "Modernized the iOS architecture and dependency management, reducing compile time by 21%.",
+      "Consolidated four app targets into one and refactored the codebase, eliminating ~200 compile-time warnings."
     ]
   },
   {
     title: "Mobile Engineer",
-    company: "Venuenext",
+    company: "VenueNext",
     period: "Sep 2015 – Sep 2017",
     notes: [
-      "Onboarded six Fortune 500 customers into custom-label apps.",
-      "Automated build processes, reducing build times by 45% per platform."
+      "Developed iOS and Android features for a server-driven UI platform supporting white-label applications for six Fortune 500 customers.",
+      "Built CI/CD pipelines to automate builds and releases for ~18 white-label iOS and Android apps, reducing build times by 45% per platform.",
+      "Collaborated with Product, Design, and an offshore engineering team on feature development, roadmap priorities, and cross-time-zone delivery."
     ]
   },
   {
-    title: "Associate SW Engineer",
+    title: "Associate Software Engineer",
     company: "Pearson",
     period: "Sep 2013 – Sep 2015",
     notes: [
-      "Collaborated with 35+ engineers to build cross-platform apps with Xamarin.",
-      "Built a conflict resolution flow for content syncing across native iOS and Xamarin apps."
+      "Collaborated with 35+ engineers across multiple teams to develop cross-platform mobile applications using Xamarin.",
+      "Served as team lead for support and feature teams, coordinating delivery of new functionality and production fixes.",
+      "Implemented cross-platform conflict resolution for user content synchronization across native iOS and Xamarin."
     ]
   },
   {
     title: "Senior Expert of Architecture and Infrastructures",
     company: "Chargoon",
-    location: "Tehran, Iran",
     period: "Feb 2008 – Jun 2011",
     notes: [
-      "Designed and delivered enterprise software architecture and infrastructure solutions for large-scale business applications."
+      "Developed full-stack enterprise applications and system integrations using .NET, MS SQL, and WCF."
     ]
   }
 ];
 
 export const resumeSkillGroups = [
-  { label: "Languages", skills: ["Swift", "Objective-C", "Kotlin", "Java", "SQL", "JavaScript", "TypeScript"] },
-  { label: "AI Tools", skills: ["GitHub Copilot", "Claude Code", "Codex", "AI Agents"] },
-  { label: "iOS & Mobile", skills: ["iOS SDK", "UIKit", "SwiftUI", "Combine", "Core Data", "Swift Concurrency", "React Native", "Android SDK"] },
-  { label: "Backend & Cloud", skills: ["gRPC", "GraphQL", "Google Cloud Platform", "AWS Amplify", "AppSync", "DynamoDB"] },
-  { label: "CI/CD & DevOps", skills: ["GitHub Actions", "CircleCI", "Bitrise", "Xcode Cloud", "Fastlane", "Shell Scripting"] },
-  { label: "Testing", skills: ["XCTest", "UI Automation", "Snapshot Testing", "JUnit"] }
+  { label: "Languages", skills: ["Swift", "Objective-C", "Kotlin", "Java", "JavaScript", "TypeScript", "SQL"] },
+  { label: "Mobile", skills: ["iOS", "UIKit", "SwiftUI", "Swift Concurrency", "Android", "React Native"] },
+  { label: "AI & Developer Tooling", skills: ["AI Agents", "Model Context Protocol (MCP)", "AI-Assisted Development"] },
+  { label: "Backend & Cloud", skills: ["gRPC", "GraphQL", "Firebase", "Google Cloud", "AWS"] },
+  { label: "CI/CD & Testing", skills: ["GitHub Actions", "CircleCI", "Bitrise", "Xcode Cloud", "Fastlane", "XCTest", "UI Automation", "Snapshot Testing"] }
 ];
 
 export const resumeEducation = [
@@ -325,8 +337,8 @@ export const resumeEducation = [
     period: "Aug 2011 – Aug 2013"
   },
   {
-    degree: "Bachelor of Computer Engineering",
-    school: "Islamic Azad University of Tehran North Branch",
+    degree: "Bachelor of Science, Computer Engineering",
+    school: "Islamic Azad University, Tehran North Branch",
     location: "Tehran, Iran",
     period: "Sept 2005 – Feb 2011"
   }

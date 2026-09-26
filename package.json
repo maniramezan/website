@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "npm run sync:blogs && vite",
     "sync:blogs": "node scripts/sync-blogs.mjs",
-    "build": "npm run sync:blogs && vite build",
+    "build": "npm run sync:blogs && vite build && node scripts/prerender-meta.mjs",
     "preview": "vite preview",
     "deploy": "npm run build && wrangler deploy"
   },

@@ -96,12 +96,14 @@ async function fetchText(url) {
   return response.text();
 }
 
+// Only files at the top level of src/content/blogs are bundled by the app, so
+// drafts under authored/ and reviewed/ never ship. Clear last run's output first.
 async function cleanContentDir() {
   await mkdir(contentOutputDir, { recursive: true });
   const entries = await readdir(contentOutputDir);
   await Promise.all(
     entries
-      .filter((entry) => entry.endsWith(".html"))
+      .filter((entry) => entry.endsWith(".html") || entry.endsWith(".md"))
       .map((entry) => unlink(path.join(contentOutputDir, entry)))
   );
 }
@@ -149,8 +151,9 @@ async function parseLocalMarkdownPosts() {
       url: `/blog/${slug}`,
       publishedAt: normalizePublishedAt(selectedData.publishedAt),
       contentType: "markdown",
-      contentFile: `${publishVersion}/${entry}`,
-      publishVersion
+      contentFile: `${slug}.md`,
+      publishVersion,
+      markdownContent: selectedDoc.content.trim()
     });
   }
 
@@ -290,10 +293,10 @@ async function main() {
     const posts = await buildPosts();
     await cleanContentDir();
     for (const post of posts) {
-      if (post.contentType === "html") {
-        await writeFile(path.join(contentOutputDir, post.contentFile), post.htmlContent || "", "utf8");
-        delete post.htmlContent;
-      }
+      const body = post.contentType === "html" ? post.htmlContent : post.markdownContent;
+      await writeFile(path.join(contentOutputDir, post.contentFile), body || "", "utf8");
+      delete post.htmlContent;
+      delete post.markdownContent;
     }
     await writeOutput(posts);
     await writeSitemap(posts);
