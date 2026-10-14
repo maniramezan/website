@@ -13,10 +13,10 @@
   "dependencies": {
     "gray-matter": "^4.0.3",
     "highlight.js": "^11.12.0",
-    "marked": "^18.0.13",
+    "marked": "^18.1.0",
     "marked-highlight": "^2.2.4",
-    "motion": "^13.4.0",
-    "posthog-js": "^1.434.2",
+    "motion": "^14.1.0",
+    "posthog-js": "^1.438.7",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "react-icons": "^5.7.0",
@@ -24,8 +24,8 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",
-    "@vitejs/plugin-react": "^6.1.1",
+    "@vitejs/plugin-react": "^6.1.2",
     "tailwindcss": "^4.2.4",
-    "vite": "^8.3.0"
+    "vite": "^8.3.4"
   }
 }
