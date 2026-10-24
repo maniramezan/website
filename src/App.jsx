@@ -2,11 +2,10 @@ import { createContext, useContext, useEffect, useRef, useState, useSyncExternal
 import { flushSync } from "react-dom";
 import {
   HiOutlineArrowRight,
-  HiOutlineBars3,
-  HiOutlineEnvelope,
+  HiOutlineArrowUpRight,
+  HiOutlineMagnifyingGlass,
   HiOutlineMoon,
   HiOutlineSun,
-  HiOutlineXMark,
   HiPlay,
 } from "react-icons/hi2";
 import { FaLinkedin } from "react-icons/fa6";
@@ -17,7 +16,7 @@ import {
   SiSpeakerdeck,
   SiX
 } from "react-icons/si";
-import { BrowserRouter, Link, Route, Routes, useLocation, useParams } from "react-router-dom";
+import { BrowserRouter, Link, Route, Routes, useLocation, useParams, useSearchParams } from "react-router-dom";
 import { AnimatePresence, LazyMotion, m, MotionConfig, useScroll, useSpring } from "motion/react";
 import blogData from "./generated/blog-posts.json";
 import { canonicalUrl, notFoundMeta, pageMeta, postMeta } from "./seo";
@@ -29,6 +28,7 @@ import {
   resumeExperience,
   resumeSkillGroups,
   socials,
+  siteCopy,
   talks
 } from "./data/profile";
 
@@ -61,11 +61,24 @@ const loadMarkdownModule = () => {
   return markdownModule;
 };
 
-// Both Medium HTML and marked output need focusable <pre> blocks so code blocks
-// can be scrolled by keyboard.
-const withPreTabIndex = html => html
-  .replace(/<pre>/g, '<pre tabindex="0">')
-  .replace(/<pre /g, '<pre tabindex="0" ');
+function preparePostHtml(html) {
+  let sectionIndex = 0;
+  return html
+    .replace(/<pre\b([^>]*)>/g, (_, attributes) => `<pre${attributes.replace(/\s+tabindex="[^"]*"/g, "")} tabindex="0">`)
+    .replace(/<h([2-4])([^>]*)>/g, (_, level, attributes) => {
+      sectionIndex += 1;
+      return `<h${level}${attributes.replace(/\s+id="[^"]*"/g, "")} id="section-${sectionIndex}">`;
+    });
+}
+
+function articleDetails(html) {
+  if (!html) return { headings: [], minutes: null };
+  const plainText = text => text.replace(/<[^>]+>/g, " ").replace(/&amp;/g, "&").replace(/&(?:nbsp|#160);/g, " ").replace(/&quot;/g, "\"").replace(/&#(?:39|x27);/g, "’").trim();
+  const headings = [...html.matchAll(/<h[2-4][^>]*id="([^"]+)"[^>]*>([\s\S]*?)<\/h[2-4]>/g)]
+    .map(match => ({ id: match[1], title: plainText(match[2]) }));
+  const words = plainText(html).split(/\s+/).length;
+  return { headings, minutes: Math.max(1, Math.ceil(words / 220)) };
+}
 
 // Returns a post's final body HTML. Used by BlogPostPage on the client and by
 // src/entry-server.jsx when prerendering posts at build time.
@@ -78,10 +91,10 @@ export async function loadPostHtml(post) {
     const accessibleHtml = raw
       .replace(/<h[2-6]/g, "<h2")
       .replace(/<\/h[2-6]>/g, "</h2>");
-    return withPreTabIndex(accessibleHtml);
+    return preparePostHtml(accessibleHtml);
   }
   const [{ renderMarkdown }, raw] = await Promise.all([loadMarkdownModule(), loader()]);
-  return withPreTabIndex(renderMarkdown(raw));
+  return preparePostHtml(renderMarkdown(raw));
 }
 
 // Set by the build-time prerender so a post's body is part of the static HTML.
@@ -117,7 +130,7 @@ const socialPalette = {
 
 // Keep the storage key and colours in sync with the inline script in index.html.
 const themeStorageKey = "mani-theme";
-const themeColors = { light: "#f6f1ec", dark: "#1c1719" };
+const themeColors = { light: "#f7f7f2", dark: "#1b1e1b" };
 // Fixed locale and time zone so build-time HTML and the browser agree.
 const postDateFormatter = new Intl.DateTimeFormat("en-US", {
   timeZone: "UTC",
@@ -276,22 +289,6 @@ function Tag({ label, color = "sage" }) {
   return <span className={`tag tag-${color}`}>{toUpperPreserved(label)}</span>;
 }
 
-// Fades/slides content in the moment it scrolls into view, once.
-function Reveal({ children, delay = 0, className, as: Component = m.div, y = 22, ...rest }) {
-  return (
-    <Component
-      className={className}
-      initial={{ opacity: 0, y }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-10% 0px -10% 0px" }}
-      transition={{ duration: 0.6, delay, ease: [0.16, 1, 0.3, 1] }}
-      {...rest}
-    >
-      {children}
-    </Component>
-  );
-}
-
 function ThemeToggle({ theme, onToggleTheme }) {
   const nextTheme = theme === "dark" ? "light" : "dark";
   const Icon = theme === "dark" ? HiOutlineSun : HiOutlineMoon;
@@ -322,12 +319,10 @@ function ThemeToggle({ theme, onToggleTheme }) {
   );
 }
 
-function SocialIconLink({ id, label, url, small = false, tiny = false }) {
+function SocialIconLink({ id, label, url }) {
   const Icon = socialIcons[id];
   const palette = socialPalette[id];
   if (!Icon || !url) return null;
-  const sizeStyle = tiny ? { width: "1.5rem", height: "1.5rem" } : small ? { width: "2rem", height: "2rem" } : {};
-  const iconClass = tiny ? "h-2.5 w-2.5" : small ? "h-3.5 w-3.5" : "h-[18px] w-[18px]";
   return (
     <a
       href={url}
@@ -338,245 +333,59 @@ function SocialIconLink({ id, label, url, small = false, tiny = false }) {
       className="social-link interactive-focus"
       style={{
         "--social-color": palette?.color,
-        "--social-color-dark": palette?.darkColor,
-        ...sizeStyle
+        "--social-color-dark": palette?.darkColor
       }}
     >
-      <Icon className={iconClass} aria-hidden="true" />
+      <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
     </a>
   );
 }
 
-// Social icons shown in the nav (main platforms only to avoid crowding)
-const navSocialIds = ["linkedin", "github", "speakerDeck", "twitter", "bluesky", "mastodon"];
-
-/* ── Shared nav ─────────────────────────────────────────────────── */
-
-const navBg = {
-  background: "var(--nav-bg)",
-  backdropFilter: "blur(12px)",
-  WebkitBackdropFilter: "blur(12px)"
-};
-
-const fadeUp = {
-  hidden: { opacity: 0, y: 18 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.55, ease: [0.16, 1, 0.3, 1] } }
-};
-
-// Slow-drifting gradient blobs behind the hero — purely decorative. The drift is a
-// CSS animation (compositor-only) that the reduced-motion rule in index.css stops.
-function AmbientOrbs() {
-  return (
-    <div className="ambient-orbs" aria-hidden="true">
-      <div className="ambient-orb ambient-orb-rose" />
-      <div className="ambient-orb ambient-orb-lilac" />
-      <div className="ambient-orb ambient-orb-sage" />
-    </div>
-  );
-}
-
-const navItems = [
-  { to: "/", label: "Home" },
-  { to: "/blogs", label: "Blogs" },
-  { to: "/talks", label: "Talks" },
-  { to: "/resume", label: "Resume" }
-];
-
-function useIsActiveRoute(to) {
-  const { pathname } = useLocation();
-  return to === "/" ? pathname === "/" : pathname.startsWith(to);
-}
+const navItems = siteCopy.navigation;
 
 function NavLink({ to, label }) {
-  const isActive = useIsActiveRoute(to);
+  const { pathname } = useLocation();
+  const isActive = to === "/" ? pathname === "/" : to === "/blogs"
+    ? pathname === "/blogs" || pathname.startsWith("/blog/") : pathname.startsWith(to);
   return (
-    <Link
-      to={to}
-      className="nav-link interactive-focus relative"
-      aria-current={isActive ? "page" : undefined}
-    >
-      <span className="relative z-10">{label}</span>
-      {isActive && (
-        <m.span
-          layoutId="nav-active-pill"
-          className="absolute inset-0 rounded-full bg-[var(--surface-strong)] border border-[var(--border-strong)]"
-          transition={{ type: "spring", stiffness: 500, damping: 35 }}
-        />
-      )}
-    </Link>
-  );
-}
-
-function MobileNavLink({ to, label }) {
-  const isActive = useIsActiveRoute(to);
-  return (
-    <Link
-      to={to}
-      className="nav-link nav-link-mobile interactive-focus text-base py-3"
-      aria-current={isActive ? "page" : undefined}
-    >
+    <Link to={to} className="nav-link interactive-focus" aria-current={isActive ? "page" : undefined}>
       {label}
+      {isActive && <m.span layoutId="nav-indicator" className="nav-indicator" transition={{ type: "spring", stiffness: 450, damping: 35 }} />}
     </Link>
   );
 }
 
 function SiteHeader({ theme, onToggleTheme }) {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-  const menuButtonRef = useRef(null);
-  const { pathname } = useLocation();
-
-  // Dismissing the menu (Escape, backdrop) returns focus to the button that opened it.
-  const closeMenu = () => {
-    setMenuOpen(false);
-    menuButtonRef.current?.focus();
-  };
-
-  // Any navigation — a menu link, the logo, or browser back/forward — closes the menu.
-  useEffect(() => {
-    setMenuOpen(false);
-  }, [pathname]);
-
-  useEffect(() => {
-    if (!menuOpen) return;
-    const onKey = (e) => { if (e.key === "Escape") closeMenu(); };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [menuOpen]);
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 8);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
   return (
-    <>
-      <header
-        className="sticky top-0 z-50 border-b transition-shadow duration-300"
-        style={{
-          ...navBg,
-          borderColor: "var(--border)",
-          boxShadow: scrolled ? "0 8px 30px -14px var(--border-strong)" : "none"
-        }}
-      >
-        <div className="mx-auto max-w-3xl px-5 sm:px-8 flex items-center justify-between h-[60px]">
-          {/* Left: name + social icons below */}
-          <div className="flex flex-col justify-center min-w-0">
-            <Link
-              to="/"
-              className="font-display text-base sm:text-lg tracking-[-0.03em] text-[var(--text-strong)] hover:text-[var(--accent-lilac)] transition-colors duration-150 shrink-0 interactive-focus rounded-sm leading-tight"
-            >
-              {profile.name}
-            </Link>
-            <div className="flex items-center gap-0.5 mt-1">
-              {navSocialIds.map(id => {
-                const s = socials.find(x => x.id === id);
-                return s ? <SocialIconLink key={id} id={id} label={s.label} url={s.url} tiny /> : null;
-              })}
-            </div>
-          </div>
-
-          {/* Right: desktop nav links + theme toggle + mobile hamburger */}
-          <div className="flex items-center gap-0.5 shrink-0">
-            <nav aria-label="Main" className="hidden sm:flex items-center gap-0.5">
-              {navItems.map(item => <NavLink key={item.to} {...item} />)}
-            </nav>
-            <ThemeToggle theme={theme} onToggleTheme={onToggleTheme} />
-            <m.button
-              ref={menuButtonRef}
-              type="button"
-              className="sm:hidden inline-flex items-center justify-center border border-[var(--border)] rounded-full bg-[var(--surface)] text-[var(--text-strong)] w-[2.8rem] h-[2.8rem] cursor-pointer ml-1 transition-colors duration-150 hover:border-[var(--border-strong)] hover:bg-[var(--surface-strong)] interactive-focus"
-              aria-label={menuOpen ? "Close menu" : "Open menu"}
-              aria-expanded={menuOpen}
-              aria-controls="mobile-menu"
-              onClick={() => setMenuOpen(o => !o)}
-              whileTap={{ scale: 0.92 }}
-            >
-              {menuOpen
-                ? <HiOutlineXMark className="h-[18px] w-[18px]" aria-hidden="true" />
-                : <HiOutlineBars3 className="h-[18px] w-[18px]" aria-hidden="true" />
-              }
-            </m.button>
-          </div>
-        </div>
-      </header>
-
-      {/* Mobile menu */}
-      <AnimatePresence>
-        {menuOpen && (
-          <>
-            {/* Backdrop */}
-            <m.div
-              className="fixed inset-0 z-40 sm:hidden"
-              onClick={closeMenu}
-              aria-hidden="true"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-            />
-            {/* Menu panel */}
-            <m.div
-              id="mobile-menu"
-              className="fixed top-[60px] inset-x-0 z-40 sm:hidden border-b border-[var(--border)] overflow-hidden"
-              style={navBg}
-              initial={{ opacity: 0, y: -16 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -16 }}
-              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-            >
-              <nav aria-label="Mobile" className="mx-auto max-w-3xl px-5 py-3 flex flex-col">
-                {navItems.map(item => <MobileNavLink key={item.to} {...item} />)}
-              </nav>
-              <div className="mx-auto max-w-3xl px-5 pb-4 flex flex-wrap gap-2 border-t border-[var(--border)] pt-3">
-                {navSocialIds.map(id => {
-                  const s = socials.find(x => x.id === id);
-                  return s ? <SocialIconLink key={id} id={id} label={s.label} url={s.url} small /> : null;
-                })}
-              </div>
-            </m.div>
-          </>
-        )}
-      </AnimatePresence>
-    </>
+    <header className="site-header">
+      <div className="site-shell header-inner">
+        <Link to="/" className="brand interactive-focus" aria-label={`${profile.firstName}, home`}>
+          <span className="brand-mark" aria-hidden="true">{profile.firstName.toLowerCase()}<span>.</span></span>
+        </Link>
+        <nav aria-label="Main" className="main-nav">
+          {navItems.map(item => <NavLink key={item.to} {...item} />)}
+        </nav>
+        <ThemeToggle theme={theme} onToggleTheme={onToggleTheme} />
+      </div>
+    </header>
   );
 }
 
-/* ── Card components ─────────────────────────────────────────────── */
-
 function PostCard({ post }) {
   return (
-    <m.div
-      whileHover={{ y: -5 }}
-      transition={{ type: "spring", stiffness: 350, damping: 24 }}
-    >
-      <Link
-        to={`/blog/${post.slug}`}
-        className="surface-card content-card rounded-[24px] p-5 sm:p-6 flex flex-col gap-3 cursor-pointer no-underline interactive-focus group"
-      >
-        <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-          <p className={`tag tag-${topicColor(post.topic)}`}>{post.topic}</p>
-          {post.publishedAt ? (
-            <p className="text-[var(--text-soft)] text-xs">
-              {postDateFormatter.format(new Date(post.publishedAt))}
-            </p>
-          ) : null}
+    <article className="post-row">
+      <Link to={`/blog/${post.slug}`} className="post-link interactive-focus" aria-labelledby={`post-title-${post.slug}`}>
+        <div className="post-summary">
+          <div className="post-meta">
+            <Tag label={post.topic} color={topicColor(post.topic)} />
+            {post.publishedAt && <time dateTime={new Date(post.publishedAt).toISOString()}>{postDateFormatter.format(new Date(post.publishedAt))}</time>}
+          </div>
+          <h3 id={`post-title-${post.slug}`}>{post.title}</h3>
+          <p>{post.excerpt}</p>
         </div>
-        <h3 className="font-display text-xl sm:text-2xl leading-tight text-[var(--text-strong)]">
-          {post.title}
-        </h3>
-        <p className="text-sm leading-7 text-[var(--text-muted)]">{post.excerpt}</p>
-        <span className="inline-link mt-1 inline-flex items-center gap-1 text-sm">
-          Read post
-          <HiOutlineArrowRight
-            className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-1"
-            aria-hidden="true"
-          />
-        </span>
+        <span className="row-arrow" aria-hidden="true"><HiOutlineArrowUpRight /></span>
       </Link>
-    </m.div>
+    </article>
   );
 }
 
@@ -608,6 +417,8 @@ function YouTubeEmbed({ videoId, start, title, playing, onPlay }) {
       <img
         src={`https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`}
         alt=""
+        width="480"
+        height="360"
         loading="lazy"
         decoding="async"
         className="absolute inset-0 h-full w-full object-cover opacity-90"
@@ -619,21 +430,18 @@ function YouTubeEmbed({ videoId, start, title, playing, onPlay }) {
   );
 }
 
+function talkAnchor(talk) {
+  return `talk-${talk.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/-$/, "")}`;
+}
+
 function TalkCard({ talk }) {
   const [videoPlaying, setVideoPlaying] = useState(false);
   const hasEmbed = talk.youtube || talk.speakerDeckId;
   const youtubeWatchHref = talk.youtube
     ? `https://www.youtube.com/watch?v=${talk.youtube}${talk.youtubeStart ? `&t=${talk.youtubeStart}` : ""}`
     : null;
-  // Pointer events stop at an iframe's edge, so a lifted card would drop the moment the
-  // cursor moved onto a live embed. Only lift while no iframe is on the card.
-  const hasLiveIframe = videoPlaying || (!talk.youtube && talk.speakerDeckId);
   return (
-    <m.article
-      className="surface-card content-card rounded-[24px] overflow-hidden"
-      whileHover={hasLiveIframe ? undefined : { y: -5 }}
-      transition={{ type: "spring", stiffness: 350, damping: 24 }}
-    >
+    <article id={talkAnchor(talk)} tabIndex={-1} className="surface-card talk-card overflow-hidden">
       {talk.youtube ? (
         <div className="relative w-full bg-black" style={{ paddingBottom: "56.25%" }}>
           <YouTubeEmbed
@@ -706,195 +514,173 @@ function TalkCard({ talk }) {
           )}
         </div>
       </div>
-    </m.article>
+    </article>
   );
 }
 
 /* ── Page footer ─────────────────────────────────────────────────── */
 
-function PageFooter({ showSocials = false }) {
+function PageFooter() {
   return (
-    <footer className="border-t border-[var(--border)] pt-8 pb-2 flex items-center justify-between flex-wrap gap-3">
-      <span className="text-sm text-[var(--text-soft)]">
-        © {new Date().getFullYear()} {profile.name}
-      </span>
-      {showSocials && (
-        <div className="flex items-center gap-1.5">
-          {socials.map(s => (
-            <SocialIconLink key={s.id} id={s.id} label={s.label} url={s.url} small />
-          ))}
+    <footer className="page-footer">
+      <div className="footer-invitation">
+        <div>
+          <p className="section-kicker">{siteCopy.footer.eyebrow}</p>
+          <p className="footer-title">{siteCopy.footer.title}</p>
         </div>
-      )}
+        <a href={`mailto:${profile.email}`} className="hero-cta hero-cta-secondary interactive-focus">
+          {siteCopy.footer.contactLabel}<HiOutlineArrowUpRight aria-hidden="true" />
+        </a>
+      </div>
+      <div className="footer-bottom">
+        <div><p>© {new Date().getFullYear()} {profile.name}</p><p>{siteCopy.footer.note}</p></div>
+        <div className="footer-socials" aria-label="Social profiles">
+          {socials.map(social => <SocialIconLink key={social.id} {...social} />)}
+        </div>
+      </div>
     </footer>
   );
 }
 
-/* ── Pages ───────────────────────────────────────────────────────── */
+function SectionHeading({ id, label, title, description, to, linkLabel }) {
+  return (
+    <div className="section-heading">
+      <div>
+        <p className="section-kicker">{label}</p>
+        <h2 id={id}>{title}</h2>
+        {description && <p className="section-description">{description}</p>}
+      </div>
+      {to && <Link to={to} className="text-link interactive-focus">{linkLabel}<HiOutlineArrowUpRight aria-hidden="true" /></Link>}
+    </div>
+  );
+}
 
 function HomePage() {
   const posts = sortedPosts(blogData.posts);
   const talkList = sortedTalks(talks);
-  const PREVIEW = 3;
+  const copy = siteCopy.home;
   usePageMeta(pageMeta["/"]);
 
   return (
-      <main id="main-content" className="relative mx-auto max-w-3xl px-5 sm:px-8 pb-20">
-        <AmbientOrbs />
+    <main id="main-content" tabIndex={-1} className="site-shell home-page">
+      <header className="home-hero">
+        <p className="hero-eyebrow"><span className="status-dot" aria-hidden="true" />{copy.eyebrow}</p>
+        <h1>{copy.headline}<br /><em>{copy.headlineAccent}</em></h1>
+        <div className="hero-bottom">
+          <p className="hero-introduction">{copy.introduction}</p>
+          <div className="hero-actions">
+            <Link to="/blogs" className="hero-cta hero-cta-primary interactive-focus">{copy.writingLabel}<HiOutlineArrowRight aria-hidden="true" /></Link>
+            <a href={`mailto:${profile.email}`} className="text-link interactive-focus">{copy.contactLabel}<HiOutlineArrowUpRight aria-hidden="true" /></a>
+          </div>
+        </div>
+      </header>
 
-        {/* Hero */}
-        <m.header
-          className="relative pt-14 sm:pt-20 pb-16 sm:pb-20"
-          initial="hidden"
-          animate="show"
-          variants={{ hidden: {}, show: { transition: { staggerChildren: 0.09 } } }}
-        >
-          <m.p variants={fadeUp} className="section-kicker section-kicker-rose mb-4">
-            {profile.role} · {profile.location}
-          </m.p>
-          <m.h1
-            variants={fadeUp}
-            className="font-display leading-[0.95] tracking-[-0.045em] text-[var(--text-strong)]"
-            style={{ fontSize: "clamp(2.8rem, 12vw, 4.75rem)" }}
-          >
-            <span className="text-[var(--accent-lilac)]">Mani</span> Ramezan
-          </m.h1>
-          <m.p variants={fadeUp} className="mt-4 max-w-xl text-base sm:text-lg leading-8 text-[var(--text-muted)]">
-            {profile.shortBio}
-          </m.p>
-          <m.div variants={fadeUp} className="mt-8 flex flex-wrap items-center gap-3">
-            <Link to="/blogs" className="hero-cta hero-cta-primary interactive-focus">
-              Read my writing
-              <HiOutlineArrowRight className="h-4 w-4" aria-hidden="true" />
-            </Link>
-            <Link to="/resume" className="hero-cta hero-cta-secondary interactive-focus">
-              View resume
-            </Link>
-            <a
-              href={`mailto:${profile.email}`}
-              className="hero-cta hero-cta-secondary interactive-focus"
-            >
-              <HiOutlineEnvelope className="h-4 w-4" aria-hidden="true" />
-              Get in touch
-            </a>
-          </m.div>
-        </m.header>
-
-        {/* About */}
-        <Reveal as={m.section} id="about" className="section-anchor pb-14" y={16}>
-          <h2 className="section-kicker section-kicker-rose">About</h2>
-          <div className="mt-5 space-y-4 max-w-2xl">
-            <p className="text-base leading-8 text-[var(--text-muted)]">
-              Staff-level iOS engineer with 12+ years building mobile products at companies
-              including LinkedIn and Amazon, and now leading a mobile team at Capital One. I focus on
-              architecture, developer tooling, test automation, and AI-assisted development.
-            </p>
-            <p className="text-base leading-8 text-[var(--text-muted)]">
-              Outside of work I write about engineering patterns I&apos;ve found genuinely useful —
-              practical techniques that make day-to-day iOS development less painful. I also speak
-              at iOS conferences about testing, architecture, and Xcode tooling.
-            </p>
+      <div className="home-columns">
+        <section className="writing-preview" aria-labelledby="home-writing-title">
+          <div>
+            <SectionHeading id="home-writing-title" label="Writing" title={copy.writingTitle} description={copy.writingDescription} to="/blogs" linkLabel={copy.allPosts} />
           </div>
-          <div className="mt-6 flex flex-wrap gap-2">
-            {["Swift", "iOS", "Architecture", "Testing", "CI/CD"].map(label => (
-              <Tag key={label} label={label} color={topicColor(label)} />
-            ))}
-          </div>
-          {/* Social icons — shown here on mobile since nav hides them */}
-          <div className="mt-6 flex flex-wrap items-center gap-2 sm:hidden">
-            {socials.map(s => (
-              <SocialIconLink key={s.id} id={s.id} label={s.label} url={s.url} small />
-            ))}
-          </div>
-        </Reveal>
-
-        <div className="border-t border-[var(--border)] mb-14" />
-
-        {/* Blogs preview */}
-        <section id="blogs" className="section-anchor pb-14">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="section-kicker">Blogs</h2>
-            <Link to="/blogs" className="interactive-focus text-sm font-bold text-[var(--text-muted)] hover:text-[var(--link)] transition-colors duration-150 rounded-sm">
-              View all →
-            </Link>
-          </div>
-          <div className="flex flex-col gap-3">
-            {posts.slice(0, PREVIEW).map((post, i) => (
-              <Reveal key={post.id} delay={Math.min(i, 4) * 0.07}>
-                <PostCard post={post} />
-              </Reveal>
-            ))}
-          </div>
+          {posts.length ? posts.slice(0, 3).map(post => <PostCard key={post.id} post={post} />) : <p>{siteCopy.writing.emptyArchive}</p>}
         </section>
-
-        <div className="border-t border-[var(--border)] mb-14" />
-
-        {/* Talks preview */}
-        <section id="talks" className="section-anchor pb-14">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="section-kicker section-kicker-lilac">Talks</h2>
-            <Link to="/talks" className="interactive-focus text-sm font-bold text-[var(--text-muted)] hover:text-[var(--link)] transition-colors duration-150 rounded-sm">
-              View all →
-            </Link>
+        <aside className="about-sidebar" aria-labelledby="about-title">
+          <p className="section-kicker">Behind the work</p>
+          <h2 id="about-title">{copy.aboutTitle}</h2>
+          <p className="about-description">{copy.aboutDescription}</p>
+          <Link to="/resume" className="text-link interactive-focus">{copy.aboutLink}<HiOutlineArrowUpRight aria-hidden="true" /></Link>
+          <div className="current-work">
+            <h3 className="section-kicker">{copy.currentTitle}</h3>
+            {copy.current.map(item => {
+              const content = <><span>{item.title}<HiOutlineArrowUpRight aria-hidden="true" /></span><p>{item.description}</p></>;
+              return item.to
+                ? <Link key={item.title} to={item.to} className="current-link interactive-focus">{content}</Link>
+                : <a key={item.title} href={item.url} target="_blank" rel="noreferrer" className="current-link interactive-focus">{content}</a>;
+            })}
           </div>
-          <div className="flex flex-col gap-3">
-            {talkList.slice(0, PREVIEW).map((talk, i) => (
-              <Reveal key={talk.url} delay={Math.min(i, 4) * 0.07}>
-                <TalkCard talk={talk} />
-              </Reveal>
-            ))}
-          </div>
-        </section>
+        </aside>
+      </div>
 
-        <PageFooter showSocials />
-      </main>
+      <section className="speaking-preview" aria-labelledby="home-speaking-title">
+        <div><SectionHeading id="home-speaking-title" label="Speaking" title={copy.talksTitle} description={copy.talksDescription} to="/talks" linkLabel={copy.allTalks} /></div>
+        {talkList.slice(0, 3).map(talk => (
+          <Link key={talk.title} to={`/talks#${talkAnchor(talk)}`} className="talk-row interactive-focus">
+            <span className="talk-year">{talk.year}</span><h3>{talk.title}</h3><span className="talk-venue">{talk.venue}</span><HiOutlineArrowUpRight aria-hidden="true" />
+          </Link>
+        ))}
+      </section>
+    </main>
   );
 }
 
+const subscribeHydration = () => () => {};
+const getClientHydrationSnapshot = () => true;
+const getServerHydrationSnapshot = () => false;
+
 function BlogsListPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const hydrated = useSyncExternalStore(subscribeHydration, getClientHydrationSnapshot, getServerHydrationSnapshot);
+  const searchInputRef = useRef(null);
+  const search = hydrated ? searchParams.get("q") ?? "" : "";
+  const topic = hydrated ? searchParams.get("topic") ?? "" : "";
   const posts = sortedPosts(blogData.posts);
+  const topics = [...new Set(posts.map(post => post.topic))];
+  const normalizedSearch = search.toLocaleLowerCase("en-US").trim();
+  const filteredPosts = posts.filter(post => (!topic || post.topic === topic) && `${post.title} ${post.excerpt} ${post.topic}`.toLocaleLowerCase("en-US").includes(normalizedSearch));
+  const copy = siteCopy.writing;
   usePageMeta(pageMeta["/blogs"]);
+
+  const updateFilter = (key, value) => {
+    setSearchParams(previous => {
+      const next = new URLSearchParams(previous);
+      if (value) next.set(key, value);
+      else next.delete(key);
+      return next;
+    }, { replace: true, preventScrollReset: true });
+  };
+
   return (
-      <main id="main-content" className="mx-auto max-w-3xl px-5 sm:px-8 pb-20">
-        <header className="pt-12 sm:pt-16 pb-10">
-          <p className="section-kicker">Writing</p>
-          <h1 className="mt-4 font-display text-4xl sm:text-5xl leading-tight text-[var(--text-strong)]">
-            All posts
-          </h1>
-        </header>
-        <div className="flex flex-col gap-3 pb-14">
-          <h2 className="sr-only">List of posts</h2>
-          {posts.map((post, i) => (
-            <Reveal key={post.id} delay={Math.min(i, 6) * 0.05}>
-              <PostCard post={post} />
-            </Reveal>
-          ))}
+    <main id="main-content" tabIndex={-1} className="site-shell archive-page">
+      <header className="page-heading">
+        <p className="section-kicker">{copy.eyebrow}</p>
+        <h1>{copy.title}<span className="heading-period">.</span></h1>
+        <p>{copy.description}</p>
+      </header>
+      <section aria-label="Articles" className="writing-archive">
+        <div className="archive-controls">
+          <div className="topic-filters" aria-label="Filter by topic">
+            {["", ...topics].map(value => <button key={value} type="button" aria-pressed={topic === value} onClick={() => updateFilter("topic", value)} className="filter-button interactive-focus">{value || copy.allTopics}</button>)}
+          </div>
+          <label className="search-field">
+            <HiOutlineMagnifyingGlass aria-hidden="true" />
+            <span className="sr-only">{copy.searchLabel}</span>
+            <input ref={searchInputRef} type="search" name="q" autoComplete="off" value={search} onChange={event => updateFilter("q", event.target.value)} placeholder={copy.searchPlaceholder} />
+          </label>
         </div>
-        <PageFooter />
-      </main>
+        <p className="archive-count" role="status">{filteredPosts.length} {filteredPosts.length === 1 ? "article" : "articles"}{topic ? ` in ${topic}` : ""}</p>
+        <h2 className="sr-only">Articles</h2>
+        {filteredPosts.length ? filteredPosts.map(post => <PostCard key={post.id} post={post} />) : (
+          <div className="empty-state"><h3>{copy.emptyTitle}</h3><p>{copy.emptyDescription}</p><button type="button" onClick={() => { setSearchParams({}); searchInputRef.current?.focus(); }} className="hero-cta hero-cta-secondary interactive-focus">{copy.resetLabel}</button></div>
+        )}
+      </section>
+    </main>
   );
 }
 
 function TalksListPage() {
   const talkList = sortedTalks(talks);
+  const copy = siteCopy.speaking;
   usePageMeta(pageMeta["/talks"]);
   return (
-      <main id="main-content" className="mx-auto max-w-3xl px-5 sm:px-8 pb-20">
-        <header className="pt-12 sm:pt-16 pb-10">
-          <p className="section-kicker section-kicker-lilac">Speaking</p>
-          <h1 className="mt-4 font-display text-4xl sm:text-5xl leading-tight text-[var(--text-strong)]">
-            All talks
-          </h1>
-        </header>
-        <div className="flex flex-col gap-3 pb-14">
-          <h2 className="sr-only">List of talks</h2>
-          {talkList.map((talk, i) => (
-            <Reveal key={talk.url} delay={Math.min(i, 6) * 0.05}>
-              <TalkCard talk={talk} />
-            </Reveal>
-          ))}
-        </div>
-        <PageFooter />
-      </main>
+    <main id="main-content" tabIndex={-1} className="site-shell archive-page">
+      <header className="page-heading">
+        <p className="section-kicker">{copy.eyebrow}</p>
+        <h1>{copy.title}<span className="heading-period">.</span></h1>
+        <p>{copy.description}</p>
+      </header>
+      <section className="talk-grid" aria-label="Conference talks">
+        <h2 className="sr-only">Conference talks</h2>
+        {talkList.map(talk => <TalkCard key={talk.title} talk={talk} />)}
+      </section>
+    </main>
   );
 }
 
@@ -907,29 +693,33 @@ function ResumePage() {
   usePageMeta(pageMeta["/resume"]);
 
   return (
-      <main id="main-content" className="mx-auto max-w-3xl px-5 sm:px-8 pb-20">
-        {/* Resume header */}
-        <header className="pt-12 sm:pt-16 pb-8 border-b border-[var(--border)]">
+      <main id="main-content" tabIndex={-1} className="site-shell resume-page">
+        <header className="page-heading resume-heading">
+          <p className="section-kicker">{siteCopy.resume.eyebrow}</p>
           <h1
             className="font-display leading-none tracking-[-0.04em] text-[var(--text-strong)]"
             style={{ fontSize: "clamp(2.4rem, 11vw, 3.75rem)" }}
           >
             <span className="text-[var(--accent-lilac)]">Mani</span> Ramezan
           </h1>
+          <p>{siteCopy.resume.description}</p>
+          <nav className="resume-nav" aria-label="Resume sections">
+            {siteCopy.resume.sections.map(section => <a key={section} href={`#${section.toLowerCase()}`} className="text-link interactive-focus">{section}<span aria-hidden="true">↓</span></a>)}
+          </nav>
         </header>
 
         {/* Experience */}
-        <Reveal as={m.section} className="py-10 border-b border-[var(--border)]" y={16}>
+        <section id="experience" className="resume-section py-10 border-b border-[var(--border)]">
           <h2 className="section-kicker mb-6">Experience</h2>
           {resumeExperience.map((job, i) => (
             <div
               key={i}
-              className={`py-5 ${i < resumeExperience.length - 1 ? "border-b border-[var(--border)]" : ""}`}
+              className={`experience-entry py-5 ${i < resumeExperience.length - 1 ? "border-b border-[var(--border)]" : ""}`}
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                    <span className="font-display text-lg leading-tight text-[var(--text-strong)]">{job.title}</span>
+                    <h3 className="font-display text-2xl leading-tight text-[var(--text-strong)]">{job.title}</h3>
                     {job.companyUrl ? (
                       <a
                         href={job.companyUrl}
@@ -956,10 +746,10 @@ function ResumePage() {
               </div>
             </div>
           ))}
-        </Reveal>
+        </section>
 
         {/* Community */}
-        <Reveal as={m.section} className="py-10 border-b border-[var(--border)]" y={16}>
+        <section id="community" className="resume-section py-10 border-b border-[var(--border)]">
           <h2 className="section-kicker section-kicker-rose mb-6">Community</h2>
           <div className="space-y-6">
             <div>
@@ -1082,10 +872,10 @@ function ResumePage() {
               </p>
             </div>
           </div>
-        </Reveal>
+        </section>
 
         {/* Skills */}
-        <Reveal as={m.section} className="py-10" y={16}>
+        <section id="skills" className="resume-section py-10">
           <h2 className="section-kicker section-kicker-lilac mb-6">Skills</h2>
           <div className="space-y-5">
             {resumeSkillGroups.map(group => (
@@ -1104,10 +894,9 @@ function ResumePage() {
               </div>
             ))}
           </div>
-        </Reveal>
+        </section>
 
-        <PageFooter />
-      </main>
+        </main>
   );
 }
 
@@ -1128,6 +917,7 @@ function BlogPostPage() {
   const [loadFailed, setLoadFailed] = useState(false);
   const contentRef = useRef(null);
   const hasInitialContent = contentHtml !== null;
+  const { headings, minutes } = articleDetails(contentHtml);
   usePageMeta(post ? postMeta(post) : notFoundMeta);
 
   useEffect(() => {
@@ -1165,12 +955,15 @@ function BlogPostPage() {
       button.type = "button";
       button.className = "code-copy-button interactive-focus";
       button.textContent = "Copy";
+      button.setAttribute("aria-label", "Copy code sample");
+      button.setAttribute("aria-live", "polite");
       let copyTimerId;
 
       const resetLabel = () => {
         window.clearTimeout(copyTimerId);
         copyTimerId = window.setTimeout(() => {
           button.textContent = "Copy";
+          button.setAttribute("aria-label", "Copy code sample");
         }, 1500);
       };
 
@@ -1178,9 +971,11 @@ function BlogPostPage() {
         try {
           await navigator.clipboard.writeText(codeText);
           button.textContent = "Copied";
+          button.setAttribute("aria-label", "Code copied");
           resetLabel();
         } catch {
-          button.textContent = "Failed";
+          button.textContent = "Try again";
+          button.setAttribute("aria-label", "Copy failed. Try copying again");
           resetLabel();
         }
       };
@@ -1202,95 +997,58 @@ function BlogPostPage() {
   }, [contentHtml]);
 
   if (!post) {
-    return (
-        <main id="main-content" className="mx-auto max-w-[660px] px-5 sm:px-8 pb-16 pt-12">
-          <p className="section-kicker">Writing</p>
-          <h1 className="mt-4 font-display text-5xl leading-tight">Post not found</h1>
-          <p className="mt-4 text-base leading-8 text-[var(--text-muted)]">
-            The requested article is missing or the slug no longer matches the generated content.
-          </p>
-        </main>
-    );
+    return <NotFoundPage />;
   }
 
   return (
-      <main id="main-content" className="mx-auto max-w-[660px] px-5 sm:px-8 pb-20">
-        <ReadingProgress />
-        <article>
-          {/* Post header */}
-          <header className="pt-12 sm:pt-14 pb-12 border-b border-[var(--border)]">
-            <div className="flex items-center gap-3 mb-6 flex-wrap">
-              <Tag label={post.topic} color={topicColor(post.topic)} />
-              {post.publishedAt && (
-                <span className="text-sm text-[var(--text-soft)]">
-                  {postDateFormatter.format(new Date(post.publishedAt))}
-                </span>
-              )}
-            </div>
-            <h1
-              className="font-display tracking-[-0.035em] leading-[1.1] text-[var(--text-strong)]"
-              style={{ fontSize: "clamp(1.9rem, 5vw, 2.8rem)", textWrap: "pretty" }}
-            >
-              {post.title}
-            </h1>
-            {post.excerpt && (
-              <p className="mt-5 text-lg leading-[1.8] text-[var(--text-muted)] max-w-[540px]">
-                {post.excerpt}
-              </p>
+    <main id="main-content" tabIndex={-1} className="site-shell article-page">
+      <ReadingProgress />
+      <div className="article-back"><Link to="/blogs" className="text-link interactive-focus">← All writing</Link></div>
+      <article>
+        <header className="article-header">
+          <Tag label={post.topic} color={topicColor(post.topic)} />
+          <h1>{post.title}</h1>
+          <div className="article-byline">
+            <span>{profile.name}</span>
+            {post.publishedAt && <time dateTime={new Date(post.publishedAt).toISOString()}>{postDateFormatter.format(new Date(post.publishedAt))}</time>}
+            {minutes && <span>{minutes} min read</span>}
+          </div>
+        </header>
+        <div className="article-layout">
+          <div className="article-body">
+            {headings.length > 1 && (
+              <details className="article-toc">
+                <summary>On this page</summary>
+                <nav aria-label="Article sections">{headings.map(heading => <a key={heading.id} href={`#${heading.id}`} className="interactive-focus">{heading.title}</a>)}</nav>
+              </details>
             )}
-          </header>
-
-          {/* Prose content */}
-          {contentHtml !== null ? (
-            <div
-              ref={contentRef}
-              data-post-slug={post.slug}
-              className="blog-content mt-12 pb-20"
-              dangerouslySetInnerHTML={{ __html: contentHtml }}
-            />
-          ) : loadFailed ? (
-            <p className="mt-12 pb-20 text-base leading-8 text-[var(--text-muted)]">
-              This post couldn&apos;t be loaded.{" "}
-              <a href={`/blog/${post.slug}`} className="inline-link interactive-focus">
-                Reload the page
-              </a>{" "}
-              to try again.
-            </p>
-          ) : (
-            <div className="mt-12 pb-20 flex flex-col gap-4" aria-busy="true">
-              <span className="sr-only">Loading post…</span>
-              {skeletonLineWidths.map((width, i) => (
-                <div key={i} className="skeleton h-4" style={{ width }} aria-hidden="true" />
-              ))}
-            </div>
-          )}
-        </article>
-
-        {/* Post footer */}
-        <div className="border-t border-[var(--border)] pt-8 pb-12 flex items-center justify-between flex-wrap gap-3">
-          <Link
-            to="/blogs"
-            className="inline-flex items-center text-sm font-semibold text-[var(--link)] border border-[var(--border)] rounded-full bg-[var(--surface)] px-4 py-2 transition-colors duration-150 hover:text-[var(--link-hover)] hover:border-[var(--border-strong)] hover:bg-[var(--surface-strong)] interactive-focus"
-          >
-            ← All posts
-          </Link>
-          <span className="text-sm text-[var(--text-soft)]">
-            © {new Date().getFullYear()} {profile.name}
-          </span>
+            {contentHtml !== null ? (
+              <div ref={contentRef} data-post-slug={post.slug} className="blog-content" dangerouslySetInnerHTML={{ __html: contentHtml }} />
+            ) : loadFailed ? (
+              <p role="alert">This post couldn’t be loaded. <a href={`/blog/${post.slug}`} className="inline-link interactive-focus">Reload the page</a> to try again.</p>
+            ) : (
+              <div className="flex flex-col gap-4" aria-busy="true" role="status">
+                <span className="sr-only">Loading post…</span>
+                {skeletonLineWidths.map((width, i) => <div key={i} className="skeleton" style={{ width }} aria-hidden="true" />)}
+              </div>
+            )}
+          </div>
         </div>
-      </main>
+      </article>
+      <div className="article-end"><p>Thanks for reading.</p><Link to="/blogs" className="text-link interactive-focus">More writing<HiOutlineArrowRight aria-hidden="true" /></Link></div>
+    </main>
   );
 }
 
 function NotFoundPage() {
   usePageMeta(notFoundMeta);
   return (
-      <main id="main-content" className="mx-auto max-w-3xl px-5 sm:px-8 pb-16 pt-12">
-        <div className="surface-card rounded-[28px] p-8 sm:p-10">
+      <main id="main-content" tabIndex={-1} className="site-shell not-found-page">
+        <div className="page-heading">
           <p className="section-kicker">Navigation</p>
           <h1 className="mt-4 font-display text-5xl leading-tight">Page not found</h1>
           <p className="mt-4 text-base leading-8 text-[var(--text-muted)]">
-            The page you tried to open does not exist.
+            The page you tried to open does not exist. You can return home or explore the writing archive.
           </p>
           <Link to="/" className="inline-link interactive-focus mt-6 inline-flex">
             Return Home
@@ -1347,46 +1105,53 @@ function PageTracker() {
 
 /* ── Root app ────────────────────────────────────────────────────── */
 
-// Fades/slides the page content on route change; exit is driven by AnimatePresence in AnimatedRoutes.
 function PageTransition({ children }) {
   return (
-    <m.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -10 }}
-      transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-    >
+    <div className="page-transition">
       {children}
-    </m.div>
+    </div>
   );
 }
 
-// Header/nav stay mounted across route changes so the active-tab pill can animate
-// between links instead of resetting (and re-entering from its layout default) on every navigation.
 function Layout({ theme, onToggleTheme, children }) {
+  const { pathname, hash } = useLocation();
+  const previousPath = useRef(pathname);
+
+  useEffect(() => {
+    if (hash) {
+      const target = document.getElementById(hash.slice(1));
+      if (target) {
+        target.scrollIntoView({ behavior: "instant", block: "start" });
+        target.focus({ preventScroll: true });
+      }
+    } else if (previousPath.current !== pathname) {
+      window.scrollTo({ top: 0, behavior: "instant" });
+      document.getElementById("main-content")?.focus({ preventScroll: true });
+    }
+    previousPath.current = pathname;
+  }, [pathname, hash]);
+
   return (
     <div className="min-h-screen text-[var(--text-strong)]">
       <a href="#main-content" className="skip-link">Skip to content</a>
       <SiteHeader theme={theme} onToggleTheme={onToggleTheme} />
       {children}
+      <div className="site-shell"><PageFooter /></div>
     </div>
   );
 }
 
 function AnimatedRoutes() {
   const location = useLocation();
-  // Reset scroll once the old page has exited, so the new page never opens mid-scroll.
   return (
-    <AnimatePresence mode="wait" initial={false} onExitComplete={() => window.scrollTo({ top: 0, behavior: "instant" })}>
-      <Routes location={location} key={location.pathname}>
-        <Route path="/" element={<PageTransition><HomePage /></PageTransition>} />
-        <Route path="/blogs" element={<PageTransition><BlogsListPage /></PageTransition>} />
-        <Route path="/talks" element={<PageTransition><TalksListPage /></PageTransition>} />
-        <Route path="/resume" element={<PageTransition><ResumePage /></PageTransition>} />
-        <Route path="/blog/:slug" element={<PageTransition><BlogPostPage /></PageTransition>} />
-        <Route path="*" element={<PageTransition><NotFoundPage /></PageTransition>} />
-      </Routes>
-    </AnimatePresence>
+    <Routes location={location} key={location.pathname}>
+      <Route path="/" element={<PageTransition><HomePage /></PageTransition>} />
+      <Route path="/blogs" element={<PageTransition><BlogsListPage /></PageTransition>} />
+      <Route path="/talks" element={<PageTransition><TalksListPage /></PageTransition>} />
+      <Route path="/resume" element={<PageTransition><ResumePage /></PageTransition>} />
+      <Route path="/blog/:slug" element={<PageTransition><BlogPostPage /></PageTransition>} />
+      <Route path="*" element={<PageTransition><NotFoundPage /></PageTransition>} />
+    </Routes>
   );
 }
 

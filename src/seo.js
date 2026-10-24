@@ -9,7 +9,7 @@ export const siteName = "Mani Ramezan";
 export const ogImage = `${siteUrl}/og-image.png`;
 
 const homeDescription =
-  "Mani Ramezan — founder of Arjang Consulting and mobile tech lead at Capital One. Writing and talks on mobile architecture, testing, CI/CD, and AI-assisted development.";
+  "Mani Ramezan — staff-level iOS engineer, founder of Arjang Consulting, and mobile tech lead at Capital One. Writing on native mobile architecture, performance, and developer tooling.";
 
 export const pageMeta = {
   "/": {
@@ -29,7 +29,7 @@ export const pageMeta = {
   "/resume": {
     title: `Resume | ${siteName}`,
     description:
-      "Resume of Mani Ramezan: 12+ years building mobile products at Capital One, LinkedIn, Amazon, and more.",
+      "Mani Ramezan’s resume: 12+ years in native iOS architecture, consumer applications, performance optimization, full-stack development, and technical leadership.",
     schema: "profile"
   }
 };
@@ -65,7 +65,6 @@ const person = {
   jobTitle: "Founder",
   worksFor: { "@type": "Organization", name: "Arjang Consulting", url: "https://arjang.consulting" },
   description: homeDescription,
-  address: { "@type": "PostalAddress", addressLocality: "Brooklyn", addressRegion: "NY", addressCountry: "US" },
   alumniOf: [
     { "@type": "CollegeOrUniversity", name: "University of Texas at San Antonio" },
     { "@type": "CollegeOrUniversity", name: "Islamic Azad University, Tehran North Branch" }

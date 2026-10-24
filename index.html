@@ -3,10 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#f6f1ec" />
+    <meta name="theme-color" content="#f7f7f2" />
     <script>
-      // Apply the saved (or system) theme before first paint so dark-mode visitors
-      // never see a light flash. Keep the key and colours in sync with App.jsx.
       (function () {
         try {
           var saved = localStorage.getItem("mani-theme");
@@ -17,7 +15,7 @@
           root.dataset.theme = theme;
           root.style.colorScheme = theme;
           document.querySelector('meta[name="theme-color"]')
-            .setAttribute("content", theme === "dark" ? "#1c1719" : "#f6f1ec");
+            .setAttribute("content", theme === "dark" ? "#1b1e1b" : "#f7f7f2");
         } catch (e) {}
       })();
     </script>
@@ -27,7 +25,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600;6..72,700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&display=swap"
       rel="stylesheet"
     />
 
@@ -35,14 +33,14 @@
          route by scripts/prerender.mjs from src/seo.js; these are the home values for dev. -->
     <!-- page-meta:start -->
     <title>Mani Ramezan — Founder, Arjang Consulting</title>
-    <meta name="description" content="Mani Ramezan — founder of Arjang Consulting and mobile tech lead at Capital One. Writing and talks on mobile architecture, testing, CI/CD, and AI-assisted development." />
+    <meta name="description" content="Mani Ramezan — staff-level iOS engineer, founder of Arjang Consulting, and mobile tech lead at Capital One. Writing on native mobile architecture, performance, and developer tooling." />
     <link rel="canonical" href="https://maniramezan.com/" />
     <meta property="og:type" content="website" />
     <meta property="og:title" content="Mani Ramezan — Founder, Arjang Consulting" />
-    <meta property="og:description" content="Mani Ramezan — founder of Arjang Consulting and mobile tech lead at Capital One. Writing and talks on mobile architecture, testing, CI/CD, and AI-assisted development." />
+    <meta property="og:description" content="Mani Ramezan — staff-level iOS engineer, founder of Arjang Consulting, and mobile tech lead at Capital One. Writing on native mobile architecture, performance, and developer tooling." />
     <meta property="og:url" content="https://maniramezan.com/" />
     <meta name="twitter:title" content="Mani Ramezan — Founder, Arjang Consulting" />
-    <meta name="twitter:description" content="Mani Ramezan — founder of Arjang Consulting and mobile tech lead at Capital One. Writing and talks on mobile architecture, testing, CI/CD, and AI-assisted development." />
+    <meta name="twitter:description" content="Mani Ramezan — staff-level iOS engineer, founder of Arjang Consulting, and mobile tech lead at Capital One. Writing on native mobile architecture, performance, and developer tooling." />
     <!-- page-meta:end -->
 
     <meta property="og:site_name" content="Mani Ramezan" />

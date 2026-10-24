@@ -1,10 +1,10 @@
 export const profile = {
   name: "Mani Ramezan",
+  firstName: "Mani",
   role: "Founder, Arjang Consulting",
-  location: "Brooklyn, NY",
   email: "mani@arjangconsulting.com",
   shortBio:
-    "Founder of Arjang Consulting and tech lead for a mobile team at Capital One. I spend my time on mobile architecture, developer tooling, test automation, and making AI-assisted development actually pay off on a real team.",
+    "Staff iOS engineer with 12+ years architecting and delivering mobile applications at LinkedIn, Amazon, and other technology companies. I specialize in native iOS architecture, consumer applications, performance optimization, and full-stack development, with experience leading cross-functional initiatives and mentoring engineers.",
   links: {
     linkedin: "https://www.linkedin.com/in/maniramezan",
     github: "https://github.com/maniramezan",
@@ -240,10 +240,10 @@ export const resumeExperience = [
     companyUrl: "https://www.capitalone.com",
     period: "Feb 2026 – Present",
     notes: [
-      "Lead a mobile team of four engineers, collaborating across backend, product, and engineering teams on feature scoping, technical design, and code quality.",
-      "Coordinate and drive AOC Accept across multiple teams, expanding mobile adoption by transitioning customer experiences from web to the native mobile app.",
-      "Reduced flaky tests and manual regression testing by ~90% on iOS and ~85% on Android through improvements to mobile test automation.",
-      "Drive adoption of AI-assisted development across the team through tooling, agentic workflows, and hands-on training."
+      "Provide technical leadership for a four-engineer mobile team, partnering with backend, product, and engineering teams on architecture, feature design, and code quality.",
+      "Coordinate AOC Accept across multiple teams, expanding native mobile adoption by transitioning customer experiences from web to mobile.",
+      "Reduced flaky tests and manual regression testing by ~90% on iOS and ~85% on Android through mobile test automation improvements.",
+      "Lead adoption of AI-assisted development through tooling, agentic workflows, and hands-on engineering training."
     ]
   },
   {
@@ -252,10 +252,9 @@ export const resumeExperience = [
     companyUrl: "https://arjang.consulting",
     period: "May 2023 – Present",
     notes: [
-      "Operate a technical consultancy focused on mobile CI/CD, test automation, developer tooling, and open-source software.",
-      "Develop and maintain [Jot: Habit Tracker & Calendar](https://apps.apple.com/us/app/jot-habit-tracker-calendar/id6779810169), a privacy-focused consumer app with extensive customization.",
-      "Build and maintain open-source developer tooling, including [ShipItSwifty](https://github.com/ShipItSwifty) for mobile release automation, [amoo-ai](https://github.com/arjangconsulting/amoo-ai) for AI-assisted native mobile testing, and [moqserver](https://github.com/arjangconsulting/moqserver) for UI test infrastructure.",
-      "Extend developer tooling with Model Context Protocol (MCP) integrations, enabling AI agents to automate workflows across the [App Store](https://github.com/ShipItSwifty/app-store-connect-mcp) and [Google Play](https://github.com/ShipItSwifty/google-play-store-mcp)."
+      "Develop and maintain [Jot: Habit Tracker & Calendar](https://apps.apple.com/us/app/jot-habit-tracker-calendar/id6779810169), a privacy-focused consumer application focused on customization and daily tracking.",
+      "Build open-source mobile developer tools, including [ShipItSwifty](https://github.com/ShipItSwifty) for mobile release automation, [amoo-ai](https://github.com/arjangconsulting/amoo-ai) for AI-assisted native mobile testing, and [moqserver](https://github.com/arjangconsulting/moqserver) for UI test infrastructure.",
+      "Extend mobile developer tooling with Model Context Protocol (MCP) integrations, enabling AI agents to automate [App Store](https://github.com/ShipItSwifty/app-store-connect-mcp) and [Google Play](https://github.com/ShipItSwifty/google-play-store-mcp) workflows."
     ]
   },
   {
@@ -263,7 +262,7 @@ export const resumeExperience = [
     company: "LinkedIn",
     period: "Jun 2021 – Feb 2026",
     notes: [
-      "Led a greenfield project across frontend and backend teams, architecting gRPC services and building prototypes to validate the architecture and drive cross-team adoption.",
+      "Led architecture and technical validation for a greenfield project spanning mobile and backend teams, designing gRPC services and building prototypes to drive cross-team adoption.",
       "Led a new app deep-linking initiative that unblocked an estimated $24M in revenue.",
       "Improved mobile developer experience through testing infrastructure, compiler tooling, architectural migrations, and modernization of [LayoutTest-iOS](https://github.com/linkedin/LayoutTest-iOS).",
       "Led the Sponsored Messaging mobile team across iOS and Android, mentoring engineers and conducting iOS workshops for new hires."
@@ -343,3 +342,62 @@ export const resumeEducation = [
     period: "Sept 2005 – Feb 2011"
   }
 ];
+
+export const siteCopy = {
+  navigation: [
+    { to: "/", label: "Home" },
+    { to: "/blogs", label: "Writing" },
+    { to: "/talks", label: "Talks" },
+    { to: "/resume", label: "Resume" }
+  ],
+  home: {
+    eyebrow: "Engineer, founder & writer",
+    headline: "Building software.",
+    headlineAccent: "Sharing what works.",
+    introduction: "I’m Mani, a staff-level iOS engineer and founder. I build mobile products, lead teams, and share what I learn along the way.",
+    writingLabel: "Explore the writing",
+    contactLabel: "Get in touch",
+    writingTitle: "Notes from the work.",
+    writingDescription: "Practical ideas on testing, architecture, and the craft of building software.",
+    aboutTitle: "A little context.",
+    aboutDescription: "12+ years building mobile applications at LinkedIn, Amazon, and other technology companies. My work spans native iOS architecture, consumer apps, performance optimization, and full-stack development. Today I lead a mobile team at Capital One and build developer tools through Arjang Consulting.",
+    aboutLink: "More about my work",
+    currentTitle: "Currently",
+    current: [
+      { title: "Leading mobile at Capital One", description: "Building products and helping a team do its best work.", to: "/resume" },
+      { title: "Building Arjang Consulting", description: "Developer tools, test automation, and open source.", url: "https://arjang.consulting" }
+    ],
+    talksTitle: "Ideas, out loud.",
+    talksDescription: "Talks and conversations with the developer community.",
+    allPosts: "All writing",
+    allTalks: "All talks"
+  },
+  writing: {
+    eyebrow: "The notebook",
+    title: "Writing",
+    description: "Notes on mobile engineering, reliable tests, and tools that make the everyday work a little better.",
+    searchLabel: "Search articles",
+    searchPlaceholder: "Search a title or topic…",
+    allTopics: "All topics",
+    emptyTitle: "No articles found.",
+    emptyDescription: "Try another search or explore all topics.",
+    resetLabel: "Clear filters",
+    emptyArchive: "New writing is on the way."
+  },
+  speaking: {
+    eyebrow: "On stage & in conversation",
+    title: "Talks",
+    description: "Sharing what I’ve learned about building better mobile software, one conversation at a time."
+  },
+  resume: {
+    eyebrow: "The work so far",
+    description: profile.shortBio,
+    sections: ["Experience", "Community", "Skills"]
+  },
+  footer: {
+    eyebrow: "Keep the conversation going",
+    title: "Have something in mind?",
+    contactLabel: "Say hello",
+    note: "Built with care. Shared with curiosity."
+  }
+};
