@@ -4,7 +4,7 @@ export const profile = {
   role: "Founder, Arjang Consulting",
   email: "mani@arjangconsulting.com",
   shortBio:
-    "Staff iOS engineer with 12+ years architecting and delivering mobile applications at LinkedIn, Amazon, and other technology companies. I specialize in native iOS architecture, consumer applications, performance optimization, and full-stack development, with experience leading cross-functional initiatives and mentoring engineers.",
+    "Staff iOS engineer with 12+ years architecting and delivering mobile applications at LinkedIn, Amazon, and other technology companies. I specialize in native iOS architecture, consumer applications, performance optimization, and full-stack development, and I have experience building AI-powered mobile products, leading cross-functional initiatives, and mentoring engineers.",
   links: {
     linkedin: "https://www.linkedin.com/in/maniramezan",
     github: "https://github.com/maniramezan",
@@ -253,7 +253,7 @@ export const resumeExperience = [
     period: "May 2023 – Present",
     notes: [
       "Develop and maintain [Jot: Habit Tracker & Calendar](https://apps.apple.com/us/app/jot-habit-tracker-calendar/id6779810169), a privacy-focused consumer application focused on customization and daily tracking.",
-      "Build open-source mobile developer tools, including [ShipItSwifty](https://github.com/ShipItSwifty) for mobile release automation, [amoo-ai](https://github.com/arjangconsulting/amoo-ai) for AI-assisted native mobile testing, and [moqserver](https://github.com/arjangconsulting/moqserver) for UI test infrastructure.",
+      "Build open-source mobile developer tools, including [ShipItSwifty](https://github.com/ShipItSwifty) for release automation, [amoo-ai](https://github.com/arjangconsulting/amoo-ai) for AI-assisted testing, and [moqserver](https://github.com/arjangconsulting/moqserver) for UI test infrastructure.",
       "Extend mobile developer tooling with Model Context Protocol (MCP) integrations, enabling AI agents to automate [App Store](https://github.com/ShipItSwifty/app-store-connect-mcp) and [Google Play](https://github.com/ShipItSwifty/google-play-store-mcp) workflows."
     ]
   },
@@ -262,9 +262,10 @@ export const resumeExperience = [
     company: "LinkedIn",
     period: "Jun 2021 – Feb 2026",
     notes: [
-      "Led architecture and technical validation for a greenfield project spanning mobile and backend teams, designing gRPC services and building prototypes to drive cross-team adoption.",
+      "Led the architectural redesign of Sponsored Messaging using LinkedIn's in-house server-driven UI (SDUI) framework, designing Java/gRPC backend services and Kotlin DSL components while aligning client-side architecture and reusable UI components across Sponsored Messaging and Messaging teams.",
+      "Developed Apollo GraphQL code-generation plugins for Kotlin, introducing convenience initializers that simplify nullability handling and reduce boilerplate when consuming generated GraphQL APIs.",
       "Led a new app deep-linking initiative that unblocked an estimated $24M in revenue.",
-      "Improved mobile developer experience through testing infrastructure, compiler tooling, architectural migrations, and modernization of [LayoutTest-iOS](https://github.com/linkedin/LayoutTest-iOS).",
+      "Modernized [LayoutTest-iOS](https://github.com/linkedin/LayoutTest-iOS), a shared snapshot-testing library used across LinkedIn applications and by external developers, introducing more idiomatic Swift APIs and reducing test-authoring boilerplate.",
       "Led the Sponsored Messaging mobile team across iOS and Android, mentoring engineers and conducting iOS workshops for new hires."
     ]
   },
@@ -325,22 +326,6 @@ export const resumeSkillGroups = [
   { label: "AI & Developer Tooling", skills: ["AI Agents", "Model Context Protocol (MCP)", "AI-Assisted Development"] },
   { label: "Backend & Cloud", skills: ["gRPC", "GraphQL", "Firebase", "Google Cloud", "AWS"] },
   { label: "CI/CD & Testing", skills: ["GitHub Actions", "CircleCI", "Bitrise", "Xcode Cloud", "Fastlane", "XCTest", "UI Automation", "Snapshot Testing"] }
-];
-
-export const resumeEducation = [
-  {
-    degree: "Master of Science, Computer Science",
-    concentration: "Software Engineering",
-    school: "University of Texas at San Antonio",
-    location: "San Antonio, TX",
-    period: "Aug 2011 – Aug 2013"
-  },
-  {
-    degree: "Bachelor of Science, Computer Engineering",
-    school: "Islamic Azad University, Tehran North Branch",
-    location: "Tehran, Iran",
-    period: "Sept 2005 – Feb 2011"
-  }
 ];
 
 export const siteCopy = {
