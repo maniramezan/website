@@ -120,7 +120,6 @@ All user-facing copy that isn't a blog post lives in `src/data/profile.js`:
 - `podcasts` — podcast appearances
 - `resumeExperience` — reverse-chronological roles (`title`, `company`, `companyUrl?`, `period`, `notes[]`)
 - `resumeSkillGroups` — `{ label, skills[] }` rows on the Skills section
-- `resumeEducation` — **currently unrendered**; the resume page shows no education section
 
 Notes on the resume page:
 

@@ -65,10 +65,6 @@ const person = {
   jobTitle: "Founder",
   worksFor: { "@type": "Organization", name: "Arjang Consulting", url: "https://arjang.consulting" },
   description: homeDescription,
-  alumniOf: [
-    { "@type": "CollegeOrUniversity", name: "University of Texas at San Antonio" },
-    { "@type": "CollegeOrUniversity", name: "Islamic Azad University, Tehran North Branch" }
-  ],
   knowsAbout: [
     "iOS development",
     "Swift",
